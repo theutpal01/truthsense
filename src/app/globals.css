@@ -1,26 +1,49 @@
 @import "tailwindcss";
+@plugin '../../hero.ts';
+@source '../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
+/* @custom-variant dark (&:is(.dark *)) */
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+.light {
+	--background: #ffffff;
+	--background-card-one: #E8E6E3;
+	--background-card-two: #FFFFFD;
+	--primary: #21808D;
+	--primary-hover: #1D7480;
+	--primary-active: #1A6873;
+	--text: #6B7280;
+	--highlight: #13343B;
+	--muted: #626C71;
+	--foreground: #171717;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-primary: var(--primary);
+	--color-primary-hover: var(--primary-hover);
+	--color-primary-active: var(--primary-active);
+	--color-text: var(--text);
+	--color-highlight: var(--highlight);
+	--color-muted: var(--muted);
+	--color-background-card-one: var(--background-card-one);
+	--color-background-card-two: var(--background-card-two);
+	--font-sans: var(--font-geist-sans);
+	--font-lato: var(--font-lato);
+	--font-inter: var(--font-inter);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+@layer utilities {
+	.bg-login {
+		background-image: url('/images/bgs/login.svg');
+		background-size: cover;
+		background-position: center;
+		z-index: -100;
+	}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+	.bg-register {
+		background-image: url('/images/bgs/register.svg');
+		background-size: cover;
+		background-position: center;
+		z-index: -100;
+	}
 }
