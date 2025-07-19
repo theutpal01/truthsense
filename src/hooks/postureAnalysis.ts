@@ -191,13 +191,19 @@ export function analyzeHeadAlignment(landmarks: Array<{ x: number, y: number }>)
 	return "Head slightly tilted";
 }
 
-export function analyzeHandGestures(handLandmarks: Array<Array<{ x: number, y: number }>> | Array<{ x: number, y: number }>, faceLandmarks: Array<Array<{ x: number, y: number }>> | Array<undefined>) {
+export function analyzeHandGestures(handLandmarks: Array<Array<{ x: number, y: number }>> | Array<{ x: number, y: number }>) {
 	let feedback = "";
 	if (handLandmarks.length === 0) { feedback += "Hands not in frame"; }
-	else if (handLandmarks.length === 1) {
+		else if (handLandmarks.length === 1) {
 		feedback += "One hand in frame; ";
 
-		const wrist = handLandmarks[0][0];
+		let wrist: { x: number, y: number };
+		if (Array.isArray(handLandmarks[0])) {
+			wrist = (handLandmarks[0] as Array<{ x: number, y: number }>)[0];
+		} else {
+			wrist = handLandmarks[0] as { x: number, y: number };
+		}
+
 		if (wrist.y < 0.3) { feedback += "Hand too high up in the frame"; }
 		else if (wrist.y > 0.8) { feedback += "Hand too low in the frame"; }
 		else { feedback += "Hand in the correct area for gesturing" }
@@ -205,17 +211,28 @@ export function analyzeHandGestures(handLandmarks: Array<Array<{ x: number, y: n
 	else {
 		feedback += "Both hands visible through the camera";
 
-		const wrist1 = handLandmarks[0][0];
-		const wrist2 = handLandmarks[1][0];
+		let wrist1: { x: number, y: number } | undefined;
+		let wrist2: { x: number, y: number } | undefined;
 
-		if (wrist1 < 0.3) { feedback += "One hand too high; "; }
-		else if (wrist1 > 0.8) { feedback += "One hand too low; "; }
+		if (Array.isArray(handLandmarks[0])) {
+			wrist1 = (handLandmarks[0] as Array<{ x: number, y: number }>)[0];
+			wrist2 = (handLandmarks[1] as Array<{ x: number, y: number }>)[0];
+		}
 
-		if (wrist1 < 0.3) { feedback += "the other too high"; }
-		else if (wrist1 > 0.8) { feedback += "the other too low"; }
+		if (wrist1 && wrist1.y < 0.3) { feedback += "One hand too high; "; }
+		else if (wrist1 && wrist1.y > 0.8) { feedback += "One hand too low; "; }
 
-		if ((wrist1 > 0.3 && wrist1 < 0.8) && (wrist2 > 0.3 && wrist2 < 0.8)) { feedback += "Both hands in visible region for gesturing"; }
-		if ((wrist1 > 0.3 && wrist1 < 0.8) || (wrist2 > 0.3 && wrist2 < 0.8)) { feedback += "One hand in visible region for gesturing"; }
+		if (wrist2 && wrist2.y < 0.3) { feedback += "the other too high"; }
+		else if (wrist2 && wrist2.y > 0.8) { feedback += "the other too low"; }
+
+		if (
+			wrist1 && wrist2 &&
+			(wrist1.y > 0.3 && wrist1.y < 0.8) && (wrist2.y > 0.3 && wrist2.y < 0.8)
+		) { feedback += "Both hands in visible region for gesturing"; }
+		if (
+			(wrist1 && wrist1.y > 0.3 && wrist1.y < 0.8) ||
+			(wrist2 && wrist2.y > 0.3 && wrist2.y < 0.8)
+		) { feedback += "One hand in visible region for gesturing"; }
 	}
 
 	return feedback;

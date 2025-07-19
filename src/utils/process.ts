@@ -38,7 +38,7 @@ export const updateFeedback = ({frame, analyze, feedback, setFeedback, webcamRef
 		}
 
 		if (handLandmarks) {
-			handsFeedback = analyzeHandGestures(handLandmarks, faceLandmarks);
+			handsFeedback = analyzeHandGestures(handLandmarks);
 		} else {
 			handsFeedback = 'Hands not detected';
 		}
