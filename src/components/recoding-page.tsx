@@ -1,12 +1,14 @@
 import { Button, Select, SelectItem } from '@heroui/react';
 import React, { useRef, useEffect, useState } from 'react';
 import { AnimatedWave } from './animated-wave';
+import { IoMdInformationCircleOutline } from "react-icons/io";
 import { PiStopFill } from 'react-icons/pi';
 import Webcam from 'react-webcam';
 import { exportWavFromRecording } from '@/utils/audio';
 import { usePostureAnalyzer } from '@/hooks/usePostureAnalyzer';
 import { FeedbackCounts, initialFeedbackCounts } from '@/types/feedback.types';
 import { updateFeedback } from '@/utils/process';
+import RecordingTimerCircle from './ui/timer';
 
 
 const soloCommunicationTypes = [
@@ -41,9 +43,13 @@ const soloCommunicationTypes = [
 	{ key: "podcast_solo", label: "Podcast (Solo)" },
 ];
 
+const MAX_DURATION = 1 * 60;
 
 
 const RecordingPage = () => {
+	const [elapsedTime, setElapsedTime] = useState(0);
+	const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
+
 	const webcamRef = useRef<Webcam>(null);
 	const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 	const recordedChunksRef = useRef<Blob[]>([]);
@@ -93,12 +99,34 @@ const RecordingPage = () => {
 			console.error("No valid MediaStream found for recording.");
 			setIsRecording(false);
 		}
+
+		const timer = setInterval(() => {
+			setElapsedTime(prev => {
+				if (prev + 1 >= MAX_DURATION) {
+					stopRecording(); // auto stop
+					clearInterval(timer);
+					return 0;
+				}
+				return prev + 1;
+			});
+		}, 1000);
+		setIntervalId(timer);
+
 	};
 
-	const stopRecording = () => {
-		if (!mediaRecorderRef.current) return;
+	const stopTimer = () => {
+		setElapsedTime(0);
+		if (intervalId) {
+			clearInterval(intervalId);
+			setIntervalId(null);
+		}
+	}
 
+	const stopRecording = () => {
+		stopTimer();
 		setIsRecording(false);
+
+		if (!mediaRecorderRef.current) return;
 
 		mediaRecorderRef.current.onstop = async () => {
 			console.log("MediaRecorder stopped, exporting...");
@@ -112,6 +140,7 @@ const RecordingPage = () => {
 
 
 	const resetRecording = () => {
+		stopTimer();
 		if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
 			mediaRecorderRef.current.onstop = () => {
 				setIsRecording(false);
@@ -191,13 +220,19 @@ const RecordingPage = () => {
 
 				{/* Record Button */}
 				<div className="flex flex-col items-center gap-5">
-					<button
-						onClick={isRecording ? stopRecording : startRecording}
-						disabled={!data.domain || isRecording == null}
-						className={`w-[150px] h-[150px] rounded-full bg-record-btn shadow-lg flex items-center justify-center ${data.domain != undefined ? 'cursor-pointer' : ''} transition-transform`}
-					>
-						<AnimatedWave isPlaying={isRecording} disabled={!data.domain} />
-					</button>
+					<RecordingTimerCircle visible={isRecording} duration={MAX_DURATION} elapsed={elapsedTime}>
+						<button
+							onClick={isRecording ? stopRecording : startRecording}
+							disabled={!data.domain || isRecording == null}
+							className={`w-[150px] h-[150px] rounded-full bg-record-btn shadow-lg flex items-center justify-center ${data.domain != undefined ? 'cursor-pointer' : ''} transition-transform`}
+						>
+							<AnimatedWave isPlaying={isRecording} disabled={!data.domain} />
+						</button>
+					</RecordingTimerCircle>
+					{isReady && isRecording && <p className="text-text text-sm">
+						{String(Math.floor(elapsedTime / 60)).padStart(2, '0')}:
+						{String(elapsedTime % 60).padStart(2, '0')}
+					</p>}
 					<p className="text-text">
 						{data.domain != undefined ? (!isRecording ? `Start Recording` : `Finish Recording`) : "Select a domain to start recording"}
 					</p>
@@ -213,7 +248,8 @@ const RecordingPage = () => {
 
 
 					{/* Tip */}
-					<p className="text-[10px] text-gray-400 text-center">Tip: stay calm, relaxed & confident</p>
+					<p className="text-[10px] text-gray-400 text-center flex items-center gap-1 justify-center">
+						<IoMdInformationCircleOutline size={12} /> <span className='font-bold'>Tip:</span> stay calm, relaxed & confident</p>
 				</div>
 			</div>
 		</div>
