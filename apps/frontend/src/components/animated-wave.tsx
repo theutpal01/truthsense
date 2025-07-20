@@ -1,3 +1,5 @@
+import { AnimatedWaveProps } from "@/types/ui.types";
+
 export const AnimatedWave = ({
 	colorClass = 'text-teal-500',
 	size = 'w-20 h-20',
@@ -5,7 +7,7 @@ export const AnimatedWave = ({
 	speed = 'slow', // 'slow', 'medium', 'fast'
 	isPlaying = false,
 	disabled = false
-}) => {
+}: AnimatedWaveProps) => {
 	// Heights matching the image pattern - symmetrical bars
 	const bars = [
 		{ height: 'h-4', delay: '0s', variant: 'wave' },
