@@ -1,76 +1,101 @@
-import { analyzeEyeContactAndHeadPose, analyzeHandGestures, analyzeHeadAlignment, analyzeShoulderAlignment } from "@/hooks/postureAnalysis";
+import {
+	analyzeEyeContactAndHeadPose,
+	analyzeHandGestures,
+	analyzeHeadAlignment,
+	analyzeShoulderAlignment,
+} from "@/hooks/postureAnalysis";
 import { updateFeedbackType } from "@/types/feedback.types";
 
-export const updateFeedback = ({frame, analyze, feedback, setFeedback, webcamRef, eyeAndHeadConfidence} : updateFeedbackType) => {
+export const updateFeedback = ({
+	frame,
+	analyze,
+	feedback,
+	setFeedback,
+	webcamRef,
+	eyeAndHeadConfidence,
+}: updateFeedbackType) => {
 	const interval = setInterval(async () => {
+		const webcam = webcamRef?.current;
+		const video = webcam?.video;
 
-		const video = webcamRef.current?.video;
 		if (!video || video.readyState !== 4) return null;
 
-		frame.current += 1; // <-- Increment frame index
-		const timestamp = frame.current; // <-- Use frame index as timestamp
+		frame.current += 1;
+		const timestamp = frame.current;
 		const result = await analyze(video, timestamp);
 		if (!result) return;
 
-		const updatedFeedback = { ...feedback };
+		// 🛠️ Ensure sub-objects are initialized to avoid undefined access
+		const updatedFeedback = {
+			shoulderAlignment: { ...feedback.shoulderAlignment },
+			handGestures: { ...feedback.handGestures },
+			headBodyAlignment: { ...feedback.headBodyAlignment },
+			eyeContact: { ...feedback.eyeContact },
+		};
 
 		const faceLandmarks = result.face?.faceLandmarks;
 		const poseLandmarks = result.pose?.landmarks?.[0];
 		const handLandmarks = result.hand?.landmarks || [];
 
-		let eyeAndHeadFeedback = { feedback: "", confidence: 0 }
+		let eyeAndHeadFeedback = { feedback: "", confidence: 0 };
 		let shoulderFeedback = "";
 		let handsFeedback = "";
 		let headAlignment = "";
 
-		// Setting all the feedbacks
-		if (faceLandmarks) {
-			headAlignment = analyzeHeadAlignment(faceLandmarks?.[0]);
-			eyeAndHeadFeedback = analyzeEyeContactAndHeadPose(faceLandmarks, Number(webcamRef.current?.props.height), Number(webcamRef.current?.props.width))
+		// ✅ Safe parsing of face data
+		if (faceLandmarks && faceLandmarks.length > 0) {
+			// @ts-expect-error: Expect ts error for now
+			headAlignment = analyzeHeadAlignment(faceLandmarks[0]);
+
+			eyeAndHeadFeedback = analyzeEyeContactAndHeadPose(
+				faceLandmarks,
+				Number(webcam?.props?.height ?? 0),
+				Number(webcam?.props?.width ?? 0)
+			);
 		} else {
-			eyeAndHeadFeedback = { feedback: "No face detected", confidence: 0 }
+			eyeAndHeadFeedback = { feedback: "No face detected", confidence: 0 };
 		}
 
+		// ✅ Pose landmarks
 		if (poseLandmarks) {
 			shoulderFeedback = analyzeShoulderAlignment(poseLandmarks);
 		} else {
-			shoulderFeedback = 'Shoulders not detected';
+			shoulderFeedback = "Shoulders not detected";
 		}
 
-		if (handLandmarks) {
+		// ✅ Hand landmarks
+		if (Array.isArray(handLandmarks) && handLandmarks.length > 0) {
 			handsFeedback = analyzeHandGestures(handLandmarks);
 		} else {
-			handsFeedback = 'Hands not detected';
+			handsFeedback = "Hands not detected";
 		}
 
-		// Setting the updated feedback
-		// First shoulder alignment
-		if (!updatedFeedback.shoulderAlignment[shoulderFeedback]) {
-			updatedFeedback.shoulderAlignment[shoulderFeedback] = 1;
-		} else { updatedFeedback.shoulderAlignment[shoulderFeedback] += 1; }
+		// ✅ Update feedback counts safely
+		updatedFeedback.shoulderAlignment[shoulderFeedback] =
+			(updatedFeedback.shoulderAlignment[shoulderFeedback] || 0) + 1;
 
-		// Next hands feedback
-		if (!updatedFeedback.handGestures[handsFeedback]) {
-			updatedFeedback.handGestures[handsFeedback] = 1;
-		} else { updatedFeedback.handGestures[handsFeedback] += 1; }
+		updatedFeedback.handGestures[handsFeedback] =
+			(updatedFeedback.handGestures[handsFeedback] || 0) + 1;
 
-		// Next feedback on head alignment with body
-		if (!updatedFeedback.headBodyAlignment[headAlignment]) {
-			updatedFeedback.headBodyAlignment[headAlignment] = 1;
-		} else { updatedFeedback.headBodyAlignment[headAlignment] += 1; }
+		updatedFeedback.headBodyAlignment[headAlignment] =
+			(updatedFeedback.headBodyAlignment[headAlignment] || 0) + 1;
 
-		// Finally eye contact and head posture feedback and confidence score
-		eyeAndHeadConfidence.current.sum += eyeAndHeadFeedback.confidence ? eyeAndHeadFeedback.confidence : 0;
-		eyeAndHeadConfidence.current.count += 1;
-		updatedFeedback.eyeContact['Confidence score'] = (eyeAndHeadConfidence.current.sum / eyeAndHeadConfidence.current.count)
+		// ✅ Eye contact feedback & confidence
+		if (eyeAndHeadConfidence?.current) {
+			eyeAndHeadConfidence.current.sum += eyeAndHeadFeedback.confidence ?? 0;
+			eyeAndHeadConfidence.current.count += 1;
 
-		if (!updatedFeedback.eyeContact[eyeAndHeadFeedback.feedback]) {
-			updatedFeedback.eyeContact[eyeAndHeadFeedback.feedback] = 1;
-		} else { updatedFeedback.eyeContact[eyeAndHeadFeedback.feedback] += 1; }
+			const confidenceScore =
+				eyeAndHeadConfidence.current.sum / eyeAndHeadConfidence.current.count;
+
+			updatedFeedback.eyeContact["Confidence score"] = confidenceScore;
+		}
+
+		updatedFeedback.eyeContact[eyeAndHeadFeedback.feedback] =
+			(updatedFeedback.eyeContact[eyeAndHeadFeedback.feedback] || 0) + 1;
 
 		setFeedback(updatedFeedback);
 	}, 500);
 
 	return interval;
-
-}
+};

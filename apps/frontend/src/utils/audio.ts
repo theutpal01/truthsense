@@ -47,7 +47,7 @@ export function encodeWAV(audioBuffer: AudioBuffer): Blob {
 	// Write PCM samples
 	for (let i = 0; i < samples; i++) {
 		for (let ch = 0; ch < numChannels; ch++) {
-			const sample = audioBuffer.getChannelData(ch)[i];
+			const sample = audioBuffer.getChannelData(ch)[i] ?? 0;
 			const s = Math.max(-1, Math.min(1, sample));
 			view.setInt16(offset, s * 0x7FFF, true);
 			offset += 2;
