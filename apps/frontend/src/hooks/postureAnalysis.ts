@@ -4,8 +4,8 @@ const LEFT_EYE_EAR_POINTS = { top: 159, bottom: 145, left: 33, right: 133 };
 const RIGHT_EYE_EAR_POINTS = { top: 386, bottom: 374, left: 362, right: 263 };
 const LEFT_EYE_CIRCLE_POINTS = { left_corner: 130, right_corner: 133, top: 223, bottom: 23 };
 const RIGHT_EYE_CIRCLE_POINTS = { left_corner: 362, right_corner: 359, top: 443, bottom: 253 };
-const IRIS_CENTERS = [468, 473];    // Left iris center, right iris center
-const GAZE_CALC_IDXS = [33, 263];   // Left eye point, right eye point
+const IRIS_CENTERS: [number, number] = [468, 473];    // Left iris center, right iris center
+const GAZE_CALC_IDXS: [number, number] = [33, 263];   // Left eye point, right eye point
 
 // Adjusting radius multiplier based on screen size
 let screenWidth = 1920; // fallback
@@ -33,6 +33,10 @@ function calculateEAR(landmarks: { x: number, y: number }[], points: { top: numb
 	const left = landmarks[points.left];
 	const right = landmarks[points.right];
 
+	if (!top || !bottom || !left || !right) {
+		return 0;
+	}
+
 	const verticalDist = euclidean(top, bottom);
 	const horizontalDist = euclidean(left, right);
 
@@ -41,8 +45,13 @@ function calculateEAR(landmarks: { x: number, y: number }[], points: { top: numb
 
 function getGazeVector(landmarks: Array<{ x: number, y: number }>, width: number, height: number) {
 	function vectorBetween(cornerIdx: number, irisIdx: number) {
-		const corner = { x: landmarks[cornerIdx].x * width, y: landmarks[cornerIdx].y * height };
-		const iris = { x: landmarks[irisIdx].x * width, y: landmarks[irisIdx].y * height };
+		const cornerLandmark = landmarks[cornerIdx];
+		const irisLandmark = landmarks[irisIdx];
+		if (!cornerLandmark || !irisLandmark) {
+			return { x: 0, y: 0 };
+		}
+		const corner = { x: cornerLandmark.x * width, y: cornerLandmark.y * height };
+		const iris = { x: irisLandmark.x * width, y: irisLandmark.y * height };
 		const vec = { x: iris.x - corner.x, y: iris.y - corner.y };
 		const norm = Math.hypot(vec.x, vec.y);
 		return norm === 0 ? { x: 0, y: 0 } : { x: vec.x / norm, y: vec.y / norm };
@@ -56,13 +65,28 @@ function getGazeVector(landmarks: Array<{ x: number, y: number }>, width: number
 	return normAvgVector === 0 ? { x: 0, y: 0 } : { x: avgVector.x / normAvgVector, y: avgVector.y / normAvgVector };
 }
 
-function getEyeCircleInfo(landmarks: Array<{ x: number, y: number }>, points: { left_corner: number, right_corner: number, top: number, bottom: number }, width: number, height: number, alpha: number = 0.65) {
-	const topY = landmarks[points.top].y * height;
-	const bottomY = landmarks[points.bottom].y * height;
+function getEyeCircleInfo(
+	landmarks: Array<{ x: number, y: number }>,
+	points: { left_corner: number, right_corner: number, top: number, bottom: number },
+	width: number,
+	height: number,
+	alpha: number = 0.65
+) {
+	const topLandmark = landmarks[points.top];
+	const bottomLandmark = landmarks[points.bottom];
+	const leftCornerLandmark = landmarks[points.left_corner];
+	const rightCornerLandmark = landmarks[points.right_corner];
+
+	if (!topLandmark || !bottomLandmark || !leftCornerLandmark || !rightCornerLandmark) {
+		return { center: { x: 0, y: 0 }, radius: 0 };
+	}
+
+	const topY = topLandmark.y * height;
+	const bottomY = bottomLandmark.y * height;
 	const radius = Math.abs(bottomY - topY) * RADIUS_MULTIPLIER;
 
 	const y = (1 - alpha) * topY + alpha * bottomY;
-	const x = ((landmarks[points.left_corner].x + landmarks[points.right_corner].x) / 2) * width;
+	const x = ((leftCornerLandmark.x + rightCornerLandmark.x) / 2) * width;
 	return { center: { x, y }, radius };
 }
 
@@ -75,20 +99,45 @@ function getIrisInBounds(
 	width: number,
 	height: number
 ) {
-
 	// Left eye
 	const leftEyeDetails = getEyeCircleInfo(landmarks, LEFT_EYE_CIRCLE_POINTS, width, height);
+	const leftIrisLandmark = landmarks[IRIS_CENTERS[0]];
+
+	if (!leftIrisLandmark) {
+		return {
+			leftIn: false,
+			rightIn: false,
+			leftCircle: leftEyeDetails,
+			rightCircle: { center: { x: 0, y: 0 }, radius: 0 },
+			leftIris: { x: 0, y: 0 },
+			rightIris: { x: 0, y: 0 }
+		};
+	}
+
 	const leftIris = {
-		x: Number((landmarks[IRIS_CENTERS[0]].x * width).toFixed(0)),
-		y: Number((landmarks[IRIS_CENTERS[0]].y * height).toFixed(0))
+		x: Number((leftIrisLandmark.x * width).toFixed(0)),
+		y: Number((leftIrisLandmark.y * height).toFixed(0))
 	};
 	const leftIn = isInsideCircle(leftEyeDetails.center, leftIris, leftEyeDetails.radius);
 
 	// Right eye
 	const rightEyeDetails = getEyeCircleInfo(landmarks, RIGHT_EYE_CIRCLE_POINTS, width, height);
+	const rightIrisLandmark = landmarks[IRIS_CENTERS[1]];
+
+	if (!rightIrisLandmark) {
+		return {
+			leftIn,
+			rightIn: false,
+			leftCircle: leftEyeDetails,
+			rightCircle: rightEyeDetails,
+			leftIris,
+			rightIris: { x: 0, y: 0 }
+		};
+	}
+
 	const rightIris = {
-		x: landmarks[IRIS_CENTERS[1]].x * width,
-		y: landmarks[IRIS_CENTERS[1]].y * height
+		x: rightIrisLandmark.x * width,
+		y: rightIrisLandmark.y * height
 	};
 	const rightIn = isInsideCircle(rightEyeDetails.center, rightIris, rightEyeDetails.radius);
 
@@ -129,9 +178,13 @@ export function analyzeEyeContactAndHeadPose(
 		return { feedback: "Eye contact maintained; Head centered", confidence: 1 }
 	}
 	// --- Gaze vector alignment (cosine similarity) ---
-	const dot = gazeVector.x * referenceGaze[0] + gazeVector.y * referenceGaze[1];
+	const dot = (referenceGaze && referenceGaze[0] !== undefined && referenceGaze[1] !== undefined)
+		? gazeVector.x * referenceGaze[0] + gazeVector.y * referenceGaze[1]
+		: 0;
 	const norm1 = Math.hypot(gazeVector.x, gazeVector.y);
-	const norm2 = Math.hypot(referenceGaze[0], referenceGaze[1]);
+	const norm2 = referenceGaze
+		? Math.hypot(referenceGaze[0] ?? 0, referenceGaze[1] ?? 0)
+		: 0;
 	const cosine = norm1 && norm2 ? dot / (norm1 * norm2) : 0;
 	const gazeVectorAligned = cosine > COSINE_THRESHOLD;
 
@@ -174,6 +227,11 @@ export function analyzeShoulderAlignment(landmarks: Array<{ x: number, y: number
 	// console.log(landmarks);
 	const leftShoulder = landmarks[11];
 	const rightShoulder = landmarks[12];
+
+	if (!leftShoulder || !rightShoulder) {
+		return "Shoulder landmarks not detected";
+	}
+
 	const shoulderSlope = Math.abs(leftShoulder.y - rightShoulder.y);
 
 	if (shoulderSlope < 0.05) { return "Shoulders well aligned"; }
@@ -183,7 +241,14 @@ export function analyzeShoulderAlignment(landmarks: Array<{ x: number, y: number
 
 export function analyzeHeadAlignment(landmarks: Array<{ x: number, y: number }>) {
 	const nose = landmarks[0];
-	const shoulderCenter = (landmarks[11].y + landmarks[12].y) / 2;
+	const leftShoulder = landmarks[11];
+	const rightShoulder = landmarks[12];
+
+	if (!nose || !leftShoulder || !rightShoulder) {
+		return "Head or shoulder landmarks not detected";
+	}
+
+	const shoulderCenter = (leftShoulder.y + rightShoulder.y) / 2;
 	const alignment = Math.abs(nose.x - shoulderCenter);
 
 	if (alignment < 0.03) { return "Head properly aligned with body"; }
@@ -194,12 +259,12 @@ export function analyzeHeadAlignment(landmarks: Array<{ x: number, y: number }>)
 export function analyzeHandGestures(handLandmarks: Array<Array<{ x: number, y: number }>> | Array<{ x: number, y: number }>) {
 	let feedback = "";
 	if (handLandmarks.length === 0) { feedback += "Hands not in frame"; }
-		else if (handLandmarks.length === 1) {
+	else if (handLandmarks.length === 1) {
 		feedback += "One hand in frame; ";
 
 		let wrist: { x: number, y: number };
 		if (Array.isArray(handLandmarks[0])) {
-			wrist = (handLandmarks[0] as Array<{ x: number, y: number }>)[0];
+			wrist = (handLandmarks[0] as Array<{ x: number, y: number }>)[0] ?? { x: 0, y: 0 };
 		} else {
 			wrist = handLandmarks[0] as { x: number, y: number };
 		}
