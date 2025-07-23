@@ -2,7 +2,7 @@
 import Meter from '@/components/feedback/Meter'
 import ScoreCard from '@/components/feedback/ScoreCard'
 import WordsMeter from '@/components/feedback/WordsMeter';
-import ScrollDiv from '@/components/ui/ScrollDiv';
+import ScrollDiv from '@/components/ui/scroll-div';
 import { Card, CardBody, CardHeader } from '@heroui/react'
 import React from 'react'
 
