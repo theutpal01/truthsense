@@ -58,7 +58,7 @@ export function encodeWAV(audioBuffer: AudioBuffer): Blob {
 }
 
 
-export const exportWavFromRecording = async (recordedChunks: Blob[]) => {
+export const exportWavFromRecording = async (recordedChunks: Blob[], onWavReady?: (wavBlob: Blob) => void) => {
 	console.log("Exporting WAV from recording...");
 	if (!recordedChunks || recordedChunks.length === 0) {
 		console.error("No recorded chunks available for export.");
@@ -72,7 +72,13 @@ export const exportWavFromRecording = async (recordedChunks: Blob[]) => {
 	const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
 	const wavBlob = encodeWAV(audioBuffer);
 
-	// Optional: Download the WAV
+	// Call the callback with the WAV blob if provided
+	if (onWavReady) {
+		onWavReady(wavBlob);
+		return;
+	}
+
+	// Optional: Download the WAV (legacy behavior)
 	const url = URL.createObjectURL(wavBlob);
 	console.log("WAV Blob URL:", url);
 	const a = document.createElement('a');
