@@ -14,7 +14,7 @@ const Sidebar = () => {
 	const navItems = [
 		{ href: "/", icon: <TbLayoutDashboard className="size-5" /> },
 		{ href: "/recording", icon: <TbWaveSine className="size-5" /> },
-		{ href: "/analytics", icon: <TbChartPie className="size-5" /> },
+		{ href: "/feedback/video", icon: <TbChartPie className="size-5" /> },
 		{ href: "/history", icon: <TbHistory className="size-5" /> },
 	];
 
