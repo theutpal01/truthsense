@@ -43,7 +43,7 @@ const soloCommunicationTypes = [
 	{ key: "podcast_solo", label: "Podcast (Solo)" },
 ];
 
-const MAX_DURATION = 1 * 60;
+const MAX_DURATION = 15 * 60;
 
 
 const RecordingPage = () => {

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Lato, Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+// import Sidebar from "@/components/sidebar";
+import { isMobile } from "react-device-detect";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -30,14 +32,23 @@ export default function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
+	// const auth = true;
 	return (
 		<html lang="en">
 			<body
 				className={`${geistSans.variable} ${lato.variable} ${inter.variable} light antialiased`}
 			>
-				<Providers>
-					{children}
-				</Providers>
+				{!isMobile && <Providers>
+					<div className="flex h-screen gap-5">
+						{/* {auth && <Sidebar />} */}
+						{children}
+					</div>
+				</Providers>}
+				{isMobile && 
+					<div className="flex flex-col justify-center items-center h-screen">
+						<p className="text-lg font-medium uppercase">Website not available on mobile devices</p>
+					</div>
+				}
 			</body>
 		</html>
 	);

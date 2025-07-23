@@ -62,8 +62,8 @@ const Login = () => {
 							</div>
 
 							<div className='flex w-full justify-between mb-12 mt-2'>
-								<Checkbox className='*:text-muted font-inter *:text-xs' size='sm'>
-									Remember me
+								<Checkbox className=' font-inter *:text-xs' size='sm'>
+									<p className='text-muted'>Remember me</p>
 								</Checkbox>
 								<Link href='/auth/forgot-password' className='text-muted font-inter text-xs'>
 									Forgot password?
