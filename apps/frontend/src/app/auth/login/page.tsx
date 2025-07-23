@@ -1,23 +1,48 @@
 "use client";
-import { Button, Card, CardBody, CardFooter, CardHeader, Checkbox, Form, Input, Link, } from '@heroui/react'
+import { Button, Card, CardBody, CardFooter, CardHeader, Form, Input, Link, } from '@heroui/react'
 import { LuMail } from "react-icons/lu";
 import { TbLock } from "react-icons/tb";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
 import React from 'react'
+import { useAuth } from '../../../hooks/useAPI';
+import { useRouter } from 'next/navigation';
 
 const Login = () => {
-	const [showPassword, setShowPassword] = React.useState(false);
+	const [email, setEmail] = React.useState('');
+	const [code, setCode] = React.useState('');
+	const [step, setStep] = React.useState<'email' | 'otp'>('email');
+	const { sendOTP, verifyOTP, isLoading, error } = useAuth();
+	const router = useRouter();
 
-		React.useEffect(() => {
-			const handleMouseUp = () => {
-				setShowPassword(false);
+	const handleSendOTP = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!email) return;
+		
+		try {
+			await sendOTP(email);
+			setStep('otp');
+		} catch {
+			// Error is handled by the hook
+		}
+	};
+
+	const handleVerifyOTP = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!code) return;
+		
+		try {
+			const response = await verifyOTP(email, code);
+			if (response.success) {
+				router.push('/');
 			}
-			document.addEventListener('mouseup', handleMouseUp);
-	
-			return () => {
-				document.removeEventListener('mouseup', handleMouseUp);
-			}
-		}, []);
+		} catch {
+			// Error is handled by the hook
+		}
+	};
+
+	const handleBackToEmail = () => {
+		setStep('email');
+		setCode('');
+	};
 
 	return (
 		<div className='bg-login flex flex-col items-center justify-center h-screen'>
@@ -28,52 +53,83 @@ const Login = () => {
 							Welcome Back!
 						</h2>
 						<p className='text-highlight font-inter text-sm'>
-							It&apos;s great to have you back. Whether you&apos;re preparing for an interview, a class presentation, or just building your confidence, TruthSense is here to support your progress—one session at a time.
+							{step === 'email' 
+								? "It's great to have you back. Whether you're preparing for an interview, a class presentation, or just building your confidence, TruthSense is here to support your progress—one session at a time."
+								: "We've sent a 6-digit code to your email. Enter it below to complete your login."
+							}
 						</p>
 					</CardHeader>
 					<CardBody className='flex flex-col mt-4'>
 						<h2 className='text-highlight font-inter text-xl font-base mb-4'>
-							LOGIN
+							{step === 'email' ? 'LOGIN' : 'VERIFY CODE'}
 						</h2>
-						<Form>
-							<div className='flex flex-col gap-4 w-full'>
-								<Input
-									placeholder='Email'
-									variant='faded'
-									startContent={<LuMail className='text-muted size-4' />}
-								/>
-								<Input
-									placeholder='Password'
-									type={`${showPassword ? 'text' : 'password'}`}
-									variant='faded'
-									startContent={<TbLock className='text-muted size-5' />}
-									endContent={
-										<button
-											type='button'
-											className='text-muted size-4'
-											onMouseDown={() => setShowPassword(true)}
-										>
-											{!showPassword ?
-												<FaEye className='text-muted size-4' />
-												: <FaEyeSlash className='text-muted size-4' />
-											}
-										</button>
-									} />
+						
+						{error && (
+							<div className='mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm'>
+								{error}
 							</div>
+						)}
 
-							<div className='flex w-full justify-between mb-12 mt-2'>
-								<Checkbox className=' font-inter *:text-xs' size='sm'>
-									<p className='text-muted'>Remember me</p>
-								</Checkbox>
-								<Link href='/auth/forgot-password' className='text-muted font-inter text-xs'>
-									Forgot password?
-								</Link>
-							</div>
+						{step === 'email' ? (
+							<Form onSubmit={handleSendOTP}>
+								<div className='flex flex-col gap-4 w-full mb-12'>
+									<Input
+										placeholder='Email'
+										variant='faded'
+										value={email}
+										onChange={(e) => setEmail(e.target.value)}
+										startContent={<LuMail className='text-muted size-4' />}
+										required
+									/>
+								</div>
 
-							<Button variant='solid' className='bg-primary text-white hover:bg-primary-hover active:bg-primary-active font-medium w-full rounded-full'>
-								Log In
-							</Button>
-						</Form>
+								<Button 
+									type='submit'
+									variant='solid' 
+									className='bg-primary text-white hover:bg-primary-hover active:bg-primary-active font-medium w-full rounded-full'
+									isLoading={isLoading}
+									disabled={!email || isLoading}
+								>
+									{isLoading ? 'Sending...' : 'Send Login Code'}
+								</Button>
+							</Form>
+						) : (
+							<Form onSubmit={handleVerifyOTP}>
+								<div className='flex flex-col gap-4 w-full mb-6'>
+									<Input
+										placeholder='Enter 6-digit code'
+										variant='faded'
+										value={code}
+										onChange={(e) => setCode(e.target.value)}
+										startContent={<TbLock className='text-muted size-5' />}
+										maxLength={6}
+										required
+									/>
+								</div>
+
+								<div className='flex flex-col gap-3 mb-6'>
+									<Button 
+										type='submit'
+										variant='solid' 
+										className='bg-primary text-white hover:bg-primary-hover active:bg-primary-active font-medium w-full rounded-full'
+										isLoading={isLoading}
+										disabled={!code || code.length !== 6 || isLoading}
+									>
+										{isLoading ? 'Verifying...' : 'Verify & Login'}
+									</Button>
+									
+									<Button 
+										type='button'
+										variant='light' 
+										className='text-primary font-medium w-full rounded-full'
+										onClick={handleBackToEmail}
+										disabled={isLoading}
+									>
+										Back to Email
+									</Button>
+								</div>
+							</Form>
+						)}
 					</CardBody>
 
 					<CardFooter className='flex flex-col gap-4'>
@@ -83,7 +139,6 @@ const Login = () => {
 					</CardFooter>
 				</Card>
 			</div>
-
 		</div>
 	)
 }
