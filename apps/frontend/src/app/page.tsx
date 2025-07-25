@@ -1,4 +1,5 @@
 "use client";
+import { useAuth } from '@/hooks/useAPI';
 import { Card } from '@heroui/react';
 import Link from 'next/link';
 import React from 'react';
@@ -30,6 +31,8 @@ const features = [
 ];
 
 const FeatureCards = () => {
+	const {isAuthenticated} = useAuth();
+
 	return (
 		<section className="py-16 px-4 bg-background">
 			<div className="max-w-7xl mx-auto text-center">
@@ -56,13 +59,13 @@ const FeatureCards = () => {
 
 				{/* Login Card */}
 
-				<div className="mt-16 max-w-96 min-h-40 mx-auto">
+				{!isAuthenticated && <div className="mt-16 max-w-96 min-h-40 mx-auto">
 					<h3 className="text-xl font-semibold text-gray-800 mb-1">Get Started with <span className="text-primary">TruthSense</span></h3>
 					<p className="text-gray-600 text-sm mb-4">Sign up to start improving your speaking skills today!</p>
 					<Link href="/auth/login" className="inline-block bg-primary text-white px-8 py-3 rounded-full hover:bg-primary-dark transition">
 						Join Us Now
 					</Link>
-				</div>
+				</div>}
 			</div>
 		</section>
 	);

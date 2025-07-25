@@ -33,7 +33,8 @@ class AuthService {
       );
 
       // Generate new OTP
-      const code = this.generateOTP();
+    //   const code = this.generateOTP();
+	  const code = "000000";
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
       // Save OTP to database

@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
+"use client";
+import { useState, useEffect, useRef } from 'react';
 import { authAPI, recordingAPI, healthAPI, type AuthResponse, type Recording, type RecordingDomain } from '../services/apiMethods';
 
 // Authentication hook
 export const useAuth = () => {
-	const [user, setUser] = useState<AuthResponse['user'] | null>(null);
-	const [isLoading, setIsLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
-
-	// Send OTP
+  const [user, setUser] = useState<AuthResponse['user'] | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true); // Add initial loading state
+  const [error, setError] = useState<string | null>(null);	// Send OTP
 	const sendOTP = async (email: string) => {
 		setIsLoading(true);
 		setError(null);
@@ -50,24 +50,56 @@ export const useAuth = () => {
 
 	// Check if user is logged in on mount
 	useEffect(() => {
+		let isMounted = true;
+		
 		const checkAuth = async () => {
+			// Don't check if component is unmounted
+			if (!isMounted) return;
+			
+			setIsInitialLoading(true);
 			try {
 				const response = await authAPI.getProfile();
-				if (response.success && response.user) {
+				if (response.success && response.user && isMounted) {
 					setUser(response.user);
 				}
-			} catch {
+			} catch (error) {
+				// Handle different types of errors
+				if (error instanceof Error) {
+					console.log('Auth check error:', error.message);
+					// Don't treat rate limiting as authentication failure
+					if (error.message.includes('Too many requests')) {
+						console.log('Rate limited, will retry later');
+						return; // Don't logout on rate limit
+					}
+				}
 				// User is not authenticated
-				authAPI.logout();
+				if (isMounted) {
+					authAPI.logout();
+				}
+			} finally {
+				if (isMounted) {
+					setIsInitialLoading(false);
+				}
 			}
 		};
 
-		checkAuth();
-	}, []);
+		// Only check if we don't already have a user and no token exists
+		const existingToken = localStorage.getItem('authToken');
+		if (!user && existingToken) {
+			checkAuth();
+		} else {
+			setIsInitialLoading(false);
+		}
+
+		// Cleanup function
+		return () => {
+			isMounted = false;
+		};
+	}, []); // Keep empty dependency array
 
 	return {
 		user,
-		isLoading,
+		isLoading: isLoading || isInitialLoading, // Combined loading state
 		error,
 		sendOTP,
 		verifyOTP,

@@ -6,10 +6,17 @@ import { usePathname } from "next/navigation";
 import { TbLayoutDashboard, TbWaveSine, TbChartPie, TbHistory, TbSettings, TbLogout } from "react-icons/tb";
 import { Image } from "@heroui/react";
 import { useAuth } from "@/hooks/useAPI";
+import { useRouter } from "next/navigation";
 
 const Sidebar = () => {
 	const { isAuthenticated, logout } = useAuth();
 	const pathname = usePathname();
+	const router = useRouter();
+
+	const handleLogout = () => {
+		logout();
+		router.push('/');
+	};
 
 	const navItems = [
 		{ href: "/", icon: <TbLayoutDashboard className="size-5" /> },
@@ -19,12 +26,13 @@ const Sidebar = () => {
 	];
 
 	const utilItems = [
-		{ href: "/settings", onClick: () => { }, icon: <TbSettings className="size-5" /> },
-		{ href: ".", onClick: logout, icon: <TbLogout className="size-5" /> }
+		{ onClick: () => { }, icon: <TbSettings className="size-5" /> },
+		{ onClick: handleLogout, icon: <TbLogout className="size-5" /> }
 	];
 
+
 	return (
-		<aside className="flex flex-col items-center bg-background-card-two rounded-r-2xl text-text drop-shadow h-full overflow-hidden py-3 border-r border-r-gray-50/50">
+		<aside className="flex flex-col items-center bg-background-card-two rounded-r-2xl text-text drop-shadow h-full overflow-hidden py-3">
 			{/* Logo */}
 			<div className="h-12 flex items-center w-full mb-2">
 				<Link className="h-6 w-6 mx-auto" href="/">

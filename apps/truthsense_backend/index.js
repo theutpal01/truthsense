@@ -6,7 +6,7 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./config/swagger');
 
 // Import services and database
-const { testConnection, syncDatabase } = require('./models');
+const { syncDatabase } = require('./models');
 const emailService = require('./services/emailService');
 const authService = require('./services/authService');
 
@@ -94,7 +94,7 @@ async function startServer() {
     console.log('🚀 Starting TruthSense Backend...');
     
     // Test database connection
-    await testConnection();
+    // await testConnection();
     
     // Sync database models
     await syncDatabase();
