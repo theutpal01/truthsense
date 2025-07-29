@@ -20,8 +20,8 @@ const Sidebar = () => {
 
 	const navItems = [
 		{ href: "/", icon: <TbLayoutDashboard className="size-5" /> },
-		{ href: "/recording", icon: <TbWaveSine className="size-5" /> },
-		{ href: "/feedback/video", icon: <TbChartPie className="size-5" /> },
+		{ href: "/record", icon: <TbWaveSine className="size-5" /> },
+		{ href: "/feedback", icon: <TbChartPie className="size-5" /> },
 		{ href: "/history", icon: <TbHistory className="size-5" /> },
 	];
 
@@ -30,32 +30,35 @@ const Sidebar = () => {
 		{ onClick: handleLogout, icon: <TbLogout className="size-5" /> }
 	];
 
+	const isActive = (href: string) => {
+		if (href === '/') {
+			return pathname === '/';
+		}
+		return pathname === href || pathname.startsWith(href + '/');
+	};
+
 
 	return (
-		<aside className="flex flex-col items-center bg-background-card-two rounded-r-2xl text-text drop-shadow h-full overflow-hidden py-3">
+		<aside className="flex bg-card flex-col items-center rounded-r-2xl text-text drop-shadow z-20 h-full overflow-hidden py-3">
 			{/* Logo */}
-			<div className="h-12 flex items-center w-full mb-2">
+			<div className="h-12 flex items-center w-full mb-8">
 				<Link className="h-6 w-6 mx-auto" href="/">
-					<Image src={"/logo.svg"} alt="Logo" width={24} height={24} className="h-6 w-6" loading="lazy" />
+					<Image src={"/logo.svg"} alt="Logo" width={24} height={24} className="h-6 w-6" />
 				</Link>
 			</div>
 
 			{/* Nav Items */}
-			<ul>
+			<div className="flex flex-col items-center space-y-4 mb-4 px-2.5">
 				{navItems.map((item, index) => (
-					<li
+					<Link
 						key={index}
-						className={`border-3 border-transparent ${pathname === item.href ? 'border-r-primary text-primary' : ''} hover:text-primary`}
+						href={item.href}
+						className={`${isActive(item.href) ? 'active-sidebar-btn shadow' : ''} hover:text-primary p-3 rounded-[40%]`}
 					>
-						<Link
-							href={item.href}
-							className="h-14 px-6 flex justify-center items-center w-full focus:text-primary"
-						>
-							{item.icon}
-						</Link>
-					</li>
+						{item.icon}
+					</Link>
 				))}
-			</ul>
+			</div>
 
 			{/* Bottom Action */}
 			{isAuthenticated && (

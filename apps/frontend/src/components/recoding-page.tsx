@@ -8,48 +8,17 @@ import Webcam from 'react-webcam';
 import { exportWavFromRecording } from '@/utils/audio';
 import { usePostureAnalyzer } from '@/hooks/usePostureAnalyzer';
 import { FeedbackCounts, initialFeedbackCounts } from '@/types/feedback.types';
-import { updateFeedback } from '@/utils/process';
+import { delay, updateFeedback } from '@/utils/process';
 import RecordingTimerCircle from './ui/timer';
 import { useRecording, useRecordingDomains } from '@/hooks/useAPI';
 import { transformPostureDataForBackend } from '@/utils/postureDataTransform';
-
-
-// const soloCommunicationTypes = [
-// 	// Formal/Professional (solo types only)
-// 	{ key: "interview", label: "Interview" },
-// 	{ key: "speech", label: "Speech" },
-// 	{ key: "presentation", label: "Presentation" },
-// 	{ key: "lecture", label: "Lecture" },
-// 	{ key: "briefing", label: "Briefing" },
-// 	{ key: "conference_talk", label: "Conference Talk" },
-
-// 	// Creative / Performative
-// 	{ key: "monologue", label: "Monologue" },
-// 	{ key: "poetry_recital", label: "Poetry Recital" },
-// 	{ key: "spoken_word", label: "Spoken Word" },
-// 	{ key: "improv", label: "Improv" }, // solo improv sessions
-// 	{ key: "storytelling", label: "Storytelling" },
-
-// 	// Analytical / Reflective
-// 	{ key: "think_aloud", label: "Think-Aloud" },
-// 	{ key: "self_talk", label: "Self-Talk" },
-// 	{ key: "vlog_entry", label: "Vlog/Diary Entry" },
-
-// 	// Persuasive / Directive
-// 	{ key: "pitch", label: "Pitch" },
-// 	{ key: "appeal", label: "Appeal" },
-// 	{ key: "campaign_speech", label: "Campaign Speech" },
-// 	{ key: "instruction_demo", label: "Instruction/Demo" },
-
-// 	// Informal (solo style)
-// 	{ key: "rant", label: "Rant" },
-// 	{ key: "podcast_solo", label: "Podcast (Solo)" },
-// ];
+import { useRouter } from 'next/navigation';
 
 const MAX_DURATION = 15 * 60;
 
 
 const RecordingPage = () => {
+	const router = useRouter();
 	const [elapsedTime, setElapsedTime] = useState(0);
 	const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
 
@@ -78,7 +47,6 @@ const RecordingPage = () => {
 		uploadAudio,
 		fetchRecordingAnalysis,
 		deleteRecording,
-		isLoading,
 		error
 	} = useRecording();
 
@@ -87,6 +55,7 @@ const RecordingPage = () => {
 	const frame = useRef<number>(0);
 	const [isUploading, setIsUploading] = useState(false);
 	const [isProcessing, setIsProcessing] = useState(false);
+	const [isDone, setIsDone] = useState(false);
 
 
 	const startRecording = async () => {
@@ -186,6 +155,37 @@ const RecordingPage = () => {
 						);
 
 						console.log("✅ Recording uploaded successfully!");
+						setIsDone(true);
+						// Wait for backend to process
+						// await delay(3000); // give Redis worker time to finish
+
+						// let attempts = 0;
+						// const maxAttempts = 5;
+						// let analysisData = null;
+
+						// while (attempts < maxAttempts) {
+						// 	try {
+						// 		console.log("🔄 Polling for analysis...");
+						// 		const analysis = await fetchRecordingAnalysis(currentRecording.id);
+						// 		if (analysis) {
+						// 			console.log("✅ Analysis fetched:", analysis);
+						// 			analysisData = analysis;
+						// 			break;
+						// 		}
+						// 	} catch (e) {
+						// 		console.warn("⌛ Analysis not ready, retrying...");
+						// 	}
+						// 	await delay(3000);
+						// 	attempts++;
+						// }
+
+						// if (analysisData) {
+						// 	// Redirect to feedback result page and pass recording ID or data
+						// 	router.push(`/feedback/${currentRecording.id}`);
+						// } else {
+						// 	console.error("❌ Analysis not ready after multiple attempts.");
+						// }
+
 					} catch (error) {
 						console.error("❌ Failed to upload recording:", error);
 					} finally {
@@ -270,7 +270,7 @@ const RecordingPage = () => {
 
 	return (
 		<>
-			<div className="w-full h-full flex p-12 gap-12">
+			<div className="w-full h-screen flex p-12 gap-12">
 
 				{/* Video Section */}
 				<div className="flex-1 rounded-xl overflow-hidden shadow-lg">
@@ -322,15 +322,17 @@ const RecordingPage = () => {
 						{/* Processing Status */}
 						{isProcessing && (
 							<div className='flex flex-col items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg'>
-								<Spinner className='size-6 text-yellow-500' />
+								<div>
+									<Spinner color='warning' />
+								</div>
 								<p className='text-yellow-600 text-sm font-medium'>Processing audio...</p>
 							</div>
 						)}
 
 						{/* Upload Status */}
-						{!isProcessing && isUploading && (
+						{isProcessing && !isUploading && (
 							<div className='flex flex-col items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
-								<Spinner className='size-6 text-primary' />
+								<Spinner color='primary' />
 								<p className='text-primary text-sm font-medium'>Uploading recording...</p>
 							</div>
 						)}
@@ -361,8 +363,13 @@ const RecordingPage = () => {
 							<IoMdInformationCircleOutline size={12} /> <span className='font-bold'>Tip:</span> stay calm, relaxed & confident</p>
 					</div>
 				</div>
-
 			</div>
+			{/* {isDone && (
+				<div className='w-full h-screen absolute top-0 left-0 z-50 backdrop-blur bg-black/50 items-center justify-center flex flex-col gap-4'>
+					<Spinner variant='wave' size='lg' className='' color='primary' />
+					<p className='text-text'>Showing you the report</p>
+				</div>
+			)} */}
 		</>
 	);
 };

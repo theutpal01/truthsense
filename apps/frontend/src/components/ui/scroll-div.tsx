@@ -13,7 +13,7 @@ const ScrollDiv = ({ className, color = "default", size = 'h-72', heading, child
 
 
 	return (
-		<Card className={`h-80 w-5/12 flex p-5 grow ${className} ${color !== "default" ? colors[color][0] : ""}`}>
+		<Card className={`bg-card h-80 w-5/12 flex p-5 grow ${className} ${color !== "default" ? colors[color][0] : ""}`}>
 			<CardHeader>
 				<h3 className={`${color !== "default" ? colors[color][1] : ""} font-medium`}>{heading}</h3>
 			</CardHeader>

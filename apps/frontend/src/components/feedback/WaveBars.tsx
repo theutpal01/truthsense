@@ -19,7 +19,7 @@ const WaveBars: React.FC<WaveBarsProps> = ({ score, color = 'pink' }) => {
 
 				const gradientClass = isActive
 					? `bg-gradient-to-b ${color}`
-					: 'bg-gradient-to-b from-gray-200 to-gray-300';
+					: 'bg-gradient-to-b from-gray-300 to-gray-400';
 
 				return (
 					<div

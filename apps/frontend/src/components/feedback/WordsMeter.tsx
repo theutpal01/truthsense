@@ -25,7 +25,7 @@ const WordsMeter = ({ wpm }: { wpm: number }) => {
 	const visibleArcLength = totalArcLength * percent;
 
 	return (
-		<Card className="relative w-80 h-80 p-8 flex flex-col items-center justify-center">
+		<Card className="relative bg-card w-80 h-80 p-8 flex flex-col items-center justify-center">
 			{/* Main meter container */}
 			<div className="relative w-full h-80">
 				<svg

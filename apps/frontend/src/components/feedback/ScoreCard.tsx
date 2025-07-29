@@ -1,5 +1,5 @@
 "use client";
-import { Button, Card, CardBody, CardFooter, Image } from '@heroui/react';
+import { Card, CardBody, Image } from '@heroui/react';
 import React from 'react'
 
 const ScoreCard = ({ percent }: { percent: number }) => {
@@ -9,7 +9,7 @@ const ScoreCard = ({ percent }: { percent: number }) => {
 	const strokeDashoffset = circumference - progress;
 
 	return (
-		<Card className='min-w-96 min-h-[29rem] flex h-full flex-col justify-center items-center p-5'>
+		<Card className='min-w-96 bg-card min-h-[29rem] flex h-full flex-col justify-center items-center p-5'>
 			<CardBody className='flex flex-col items-center justify-center gap-8'>
 
 				<div className="relative w-50 h-50">
@@ -37,11 +37,6 @@ const ScoreCard = ({ percent }: { percent: number }) => {
 					Overall Score: <span className='text-[#70b0ba] font-semibold'>{percent}</span>
 				</p>
 			</CardBody>
-			<CardFooter className='flex items-center justify-center w-full'>
-				<Button className='w-full bg-primary rounded-full max-w-44 text-white'>
-					Download Report
-				</Button>
-			</CardFooter>
 		</Card>
 	)
 }

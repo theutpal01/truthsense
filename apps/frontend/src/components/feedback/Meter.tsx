@@ -15,7 +15,7 @@ const Meter = ({ type, score }: { type: 'fluency' | 'clarity' | 'grammar' | 'con
 	}
 
 	return (
-		<Card className='flex flex-col items-center justify-center p-5 px-16'>
+		<Card className='flex flex-col items-center justify-center bg-card p-5 px-16'>
 			<WaveBars score={score} color={colors[type][0]} />
 			<p className={`mt-3 text-center font-medium ${colors[type][1]}`}>{type.charAt(0).toUpperCase() + type.slice(1)}: <span>{score}</span></p>
 		</Card>
