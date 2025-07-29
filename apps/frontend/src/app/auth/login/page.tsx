@@ -2,18 +2,25 @@
 import { Button, Card, CardBody, CardFooter, CardHeader, Form, Input, Link, } from '@heroui/react'
 import { LuMail } from "react-icons/lu";
 import { TbLock } from "react-icons/tb";
-import React from 'react'
 import { useAuth } from '../../../hooks/useAPI';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 const Login = () => {
-	const [email, setEmail] = React.useState('');
-	const [code, setCode] = React.useState('');
-	const [step, setStep] = React.useState<'email' | 'otp'>('email');
-	const { sendOTP, verifyOTP, isLoading, error } = useAuth();
+	const [email, setEmail] = useState('');
+	const [code, setCode] = useState('');
+	const [step, setStep] = useState<'email' | 'otp'>('email');
+	const { isAuthenticated, sendOTP, verifyOTP, isLoading, error } = useAuth();
 	const router = useRouter();
 
-	const handleSendOTP = async (e: React.FormEvent) => {
+	useEffect(() => {
+		if (isAuthenticated && !isLoading) {
+			router.push('/');
+		}
+	}, [isAuthenticated, router, isLoading]);
+
+
+	const handleSendOTP: (e: React.FormEvent<HTMLFormElement>) => Promise<void> = async (e) => {
 		e.preventDefault();
 		if (!email) return;
 		
@@ -90,7 +97,7 @@ const Login = () => {
 									isLoading={isLoading}
 									disabled={!email || isLoading}
 								>
-									{isLoading ? 'Sending...' : 'Send Login Code'}
+									{isLoading ? (email.length !== 0) ? 'Sending...' : 'Loading...' : 'Send Login Code'}
 								</Button>
 							</Form>
 						) : (
