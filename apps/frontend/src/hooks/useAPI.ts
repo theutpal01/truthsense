@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useState, useEffect } from 'react';
 import { authAPI, recordingAPI, healthAPI, type Recording, type RecordingDomain } from '../services/apiMethods';

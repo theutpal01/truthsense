@@ -31,11 +31,12 @@ export default function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
+
 	// const auth = true;
 	return (
 		<html lang="en">
 			<body
-				className={`${geistSans.variable} ${lato.variable} ${inter.variable} light antialiased bg-background overglow-hidden`}
+				className={`${geistSans.variable} ${lato.variable} ${inter.variable} antialiased bg-background overglow-hidden`}
 			>
 				<Providers>
 					<ClientLayoutWrapper>

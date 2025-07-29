@@ -155,42 +155,45 @@ const RecordingPage = () => {
 						);
 
 						console.log("✅ Recording uploaded successfully!");
+						setIsUploading(false);
 						setIsDone(true);
+						setIsProcessing(false);
+
+						
 						// Wait for backend to process
-						// await delay(3000); // give Redis worker time to finish
+						await delay(3000); // give Redis worker time to finish
 
-						// let attempts = 0;
-						// const maxAttempts = 5;
-						// let analysisData = null;
+						let attempts = 0;
+						const maxAttempts = 5;
+						let analysisData = null;
 
-						// while (attempts < maxAttempts) {
-						// 	try {
-						// 		console.log("🔄 Polling for analysis...");
-						// 		const analysis = await fetchRecordingAnalysis(currentRecording.id);
-						// 		if (analysis) {
-						// 			console.log("✅ Analysis fetched:", analysis);
-						// 			analysisData = analysis;
-						// 			break;
-						// 		}
-						// 	} catch (e) {
-						// 		console.warn("⌛ Analysis not ready, retrying...");
-						// 	}
-						// 	await delay(3000);
-						// 	attempts++;
-						// }
+						while (attempts < maxAttempts) {
+							try {
+								console.log("🔄 Polling for analysis...");
+								const analysis = await fetchRecordingAnalysis(currentRecording.id);
+								if (analysis) {
+									console.log("✅ Analysis fetched:", analysis);
+									analysisData = analysis;
+									break;
+								}
+							} catch {
+								console.warn("⌛ Analysis not ready, retrying...");
+							}
+							await delay(3000);
+							attempts++;
+						}
 
-						// if (analysisData) {
-						// 	// Redirect to feedback result page and pass recording ID or data
-						// 	router.push(`/feedback/${currentRecording.id}`);
-						// } else {
-						// 	console.error("❌ Analysis not ready after multiple attempts.");
-						// }
+						if (analysisData) {
+							// Redirect to feedback result page and pass recording ID or data
+							router.push(`/feedback/${currentRecording.id}`);
+						} else {
+							console.error("❌ Analysis not ready after multiple attempts.");
+						}
 
 					} catch (error) {
 						console.error("❌ Failed to upload recording:", error);
 					} finally {
-						setIsProcessing(false);
-						setIsUploading(false);
+						setIsDone(false);
 					}
 				});
 			};
@@ -304,7 +307,7 @@ const RecordingPage = () => {
 							<button
 								onClick={isRecording ? stopRecording : startRecording}
 								disabled={!data.domain || isRecording == null}
-								className={`w-[150px] h-[150px] rounded-full bg-record-btn shadow-lg flex items-center justify-center ${data.domain != undefined ? 'cursor-pointer' : ''} transition-transform`}
+								className={`w-[150px] h-[150px] rounded-full bg-card shadow-lg flex items-center justify-center ${data.domain != undefined ? 'cursor-pointer' : ''} transition-transform`}
 							>
 								<AnimatedWave isPlaying={isRecording} disabled={!data.domain} />
 							</button>
@@ -330,7 +333,7 @@ const RecordingPage = () => {
 						)}
 
 						{/* Upload Status */}
-						{isProcessing && !isUploading && (
+						{!isProcessing && isUploading && (
 							<div className='flex flex-col items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
 								<Spinner color='primary' />
 								<p className='text-primary text-sm font-medium'>Uploading recording...</p>
@@ -338,7 +341,7 @@ const RecordingPage = () => {
 						)}
 
 						{/* Error Display */}
-						{error && (
+						{!isDone && error && (
 							<div className='flex flex-col items-center gap-1 p-3 bg-red-50 border border-red-200 rounded-lg'>
 								<p className='text-red-600 text-sm text-center'>{error}</p>
 							</div>
@@ -364,12 +367,12 @@ const RecordingPage = () => {
 					</div>
 				</div>
 			</div>
-			{/* {isDone && (
+			{isDone && (
 				<div className='w-full h-screen absolute top-0 left-0 z-50 backdrop-blur bg-black/50 items-center justify-center flex flex-col gap-4'>
 					<Spinner variant='wave' size='lg' className='' color='primary' />
 					<p className='text-text'>Showing you the report</p>
 				</div>
-			)} */}
+			)}
 		</>
 	);
 };

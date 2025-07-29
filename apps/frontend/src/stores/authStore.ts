@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // stores/authStore.ts
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -28,7 +29,7 @@ type AuthState = {
 
 export const useAuthStore = create<AuthState>()(
 	persist(
-		(set, get) => ({
+		(set) => ({
 			user: null,
 			token: null,
 			isLoading: false,

@@ -27,7 +27,7 @@ const ScoreCard = ({ percent }: { percent: number }) => {
 						/>
 					</svg>
 					<div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
-						<div className='bg-record-btn w-50 h-50 rounded-full flex items-center justify-center p-8 shadow-lg'>
+						<div className='bg-white/25 w-50 h-50 rounded-full flex items-center justify-center p-8 shadow-lg'>
 							<Image src={`/images/utils/performance.svg`} alt="Score" className='w-full h-full' />
 						</div>
 					</div>

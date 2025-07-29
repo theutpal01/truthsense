@@ -20,6 +20,10 @@
 	--success: #3dc97c;
 	--warning: #d2c235;
 	--error: #c42727;
+	--theme-grad-one: #B7B7B7;
+	--theme-grad-two: #D4D4D4;
+	--thumb-grad-one: #C8E4E3;
+	--thumb-grad-two: #ECECEC;
 }
 
 .dark {
@@ -39,6 +43,10 @@
 	--success: #4CAF50;
 	--warning: #FFEB3B;
 	--error: #F44336;
+	--theme-grad-one: #3A3939;
+	--theme-grad-two: #252525;
+	--thumb-grad-one: #363636;
+	--thumb-grad-two: #506A77;
 }
 
 @theme inline {
@@ -85,27 +93,44 @@
 
 	.bg-success {
 		background: linear-gradient(180deg,
-				#A8E6CF 0%,
-				#DCEDC1 100%);
+				#A8E6CF11 0%,
+				#DCEDC122 100%);
+		border: 1px solid var(--success);
 	}
 
 	.bg-warning {
 		background: linear-gradient(180deg,
-				#FFF9C4 0%,
-				#FFECB3 100%);
+				#FFF9C411 0%,
+				#FFECB322 100%);
+		border: 1px solid var(--warning);
 	}
 
 	.bg-error {
 		background: linear-gradient(180deg,
-				#FFB2B2 0%,
-				#FF7A7A 100%);
+				#ffb2b211 0%,
+				#ff7a5222 100%);
+		border: 1px solid var(--error);
 	}
 
 
 	.bg-record-btn {
 		background: linear-gradient(45deg,
-				#C3C3C3 0%,
-				#EFEFEF 50%);
+				#C3C3C3FF 0%,
+				#EFEFEFFF 50%);
+	}
+
+	.bg-theme-btn {
+		background: linear-gradient(45deg,
+				var(--theme-grad-one) 0%,
+				var(--theme-grad-two) 100%);
+		border: 1px solid var(--border);
+	}
+
+	.bg-thumb {
+		background: linear-gradient(45deg,
+				var(--thumb-grad-one) 0%,
+				var(--thumb-grad-two) 100%);
+		border: 1px solid var(--border);
 	}
 
 	.active-sidebar-btn {

@@ -1,17 +1,44 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { TbLayoutDashboard, TbWaveSine, TbChartPie, TbHistory, TbSettings, TbLogout } from "react-icons/tb";
-import { Image } from "@heroui/react";
+import { Image, Switch } from "@heroui/react";
 import { useAuth } from "@/hooks/useAPI";
 import { useRouter } from "next/navigation";
+import { FaRegMoon, FaRegSun } from "react-icons/fa";
 
 const Sidebar = () => {
 	const { isAuthenticated, logout } = useAuth();
 	const pathname = usePathname();
 	const router = useRouter();
+	const [theme, setTheme] = useState<'light' | 'dark' | null>('light');
+
+	useEffect(() => {
+		if (theme) {
+			if (theme === 'dark' && !document.body.classList.contains('dark')) {
+				document.body.classList.remove('light');
+				document.body.classList.add('dark');
+				localStorage.setItem('theme', 'dark');
+			} else if (theme === 'light' && !document.body.classList.contains('light')) {
+				document.body.classList.remove('dark');
+				document.body.classList.add('light');
+				localStorage.setItem('theme', 'light');
+			}
+		} else {
+			localStorage.setItem('theme', 'light');
+			document.body.classList.add('light');
+		}
+	}, [theme]);
+
+	const handleThemeChange = (checked: boolean) => {
+		if (checked) {
+			setTheme('dark');
+		} else {
+			setTheme('light');
+		}
+	};
 
 	const handleLogout = () => {
 		logout();
@@ -60,20 +87,38 @@ const Sidebar = () => {
 				))}
 			</div>
 
-			{/* Bottom Action */}
-			{isAuthenticated && (
-				<div className="mt-auto flex flex-col items-center w-full">
-					{utilItems.map((item, index) => (
-						<button
-							key={index}
-							className="h-14 cursor-pointer mx-auto flex justify-center items-center w-full"
-							onClick={item.onClick}
-						>
-							{item.icon}
-						</button>
-					))}
+
+			<div className="flex flex-col items-center justify-end flex-1 w-full ">
+
+				<div className="h-full flex-3/4 gap-6 flex flex-col items-center justify-center">
+					<FaRegSun className="text-text" />
+					<Switch
+						classNames={{
+							base: "rotate-90",
+							wrapper: "rounded-lg bg-theme-btn h-8 w-14",
+							thumb: "rounded bg-thumb h-6 w-6 m-0",
+						}}
+						defaultChecked={theme == "dark"}						
+						onChange={(e) => handleThemeChange(e.target.checked)}
+					/>
+					<FaRegMoon className="text-text" />
 				</div>
-			)}
+
+				{/* Bottom Action */}
+				{isAuthenticated && (
+					<div className="mt-auto flex flex-col flex-1/4 items-center ">
+						{utilItems.map((item, index) => (
+							<button
+								key={index}
+								className="h-14 cursor-pointer mx-auto flex justify-center items-center w-full"
+								onClick={item.onClick}
+							>
+								{item.icon}
+							</button>
+						))}
+					</div>
+				)}
+			</div>
 		</aside>
 	);
 };

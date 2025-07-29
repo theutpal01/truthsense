@@ -11,7 +11,7 @@ const Meter = ({ type, score }: { type: 'fluency' | 'clarity' | 'grammar' | 'con
 		grammar: ['from-[#22C891]/40 to-[#22C891]', 'text-[#22C891]'],
 		confidence: ['from-[#FBB540]/40 to-[#FBB540]', 'text-[#FBB540]'],
 		posture: ['from-[#8E92CF]/40 to-[#8E92CF]', 'text-[#8E92CF]'],
-		structure: ['from-[#C2D45C]/40 to-[#C2D45C]', 'text-[#C2D45C]']
+		structure: ['from-[#A2B45C]/40 to-[#A2B45C]', 'text-[#A2B45C]']
 	}
 
 	return (

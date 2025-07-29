@@ -1,5 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import html2pdf from "html2pdf.js";
 import React, { useEffect, useState, useRef } from "react";
 import { Button, Card, CardBody, CardHeader, Spinner } from "@heroui/react";
 import Meter from "@/components/feedback/Meter";
@@ -12,7 +12,7 @@ import { FaDownload } from "react-icons/fa";
 
 const Report = ({ id }: { id: string }) => {
 	const [loading, setLoading] = useState(true);
-	const [data, setData] = useState<any>(null);
+	const [data, setData] = useState<Record<string, any> | undefined>();
 	const { fetchRecordingAnalysis } = useRecording();
 	const reportRef = useRef<HTMLDivElement>(null);
 
@@ -28,20 +28,21 @@ const Report = ({ id }: { id: string }) => {
 				setLoading(false);
 			}
 		})();
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [id]);
 
 	const handleDownloadPDF = () => {
 		if (!reportRef.current) return;
-		html2pdf()
-			.from(reportRef.current)
-			.set({
-				margin: 0.5,
-				filename: `Report-${id}.pdf`,
-				image: { type: "jpeg", quality: 0.98 },
-				html2canvas: { scale: 2 },
-				jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
-			})
-			.save();
+		// html2pdf()
+		// 	.from(reportRef.current)
+		// 	.set({
+		// 		margin: 0.5,
+		// 		filename: `Report-${id}.pdf`,
+		// 		image: { type: "jpeg", quality: 0.98 },
+		// 		html2canvas: { scale: 2 },
+		// 		jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+		// 	})
+		// 	.save();
 	};
 
 	if (loading) {
@@ -76,9 +77,9 @@ const Report = ({ id }: { id: string }) => {
 					<Button
 						onClick={handleDownloadPDF}
 						isIconOnly={true}
-						className="bg-primary text-white hover:bg-primary-dark"
+						className="active-sidebar-btn w-12 h-12 text-primary hover:bg-primary-dark"
 					>
-						<FaDownload />
+						<FaDownload className="size-5" />
 					</Button>
 				</Card>
 
@@ -162,7 +163,7 @@ const Report = ({ id }: { id: string }) => {
 								<p><strong>Category:</strong> {rec.category}</p>
 								<p><strong>Issue:</strong> {rec.issue}</p>
 								<p><strong>Suggestion:</strong> {rec.suggestion}</p>
-								<p><strong>Priority:</strong> <span className="capitalize">{rec.priority}</span></p>
+								{/* <p><strong>Priority:</strong> <span className="capitalize">{rec.priority}</span></p> */}
 							</Card>
 						))}
 					</CardBody>

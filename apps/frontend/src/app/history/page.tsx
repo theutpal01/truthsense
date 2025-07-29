@@ -10,7 +10,8 @@ import { FaChevronRight } from 'react-icons/fa6';
 const HistoryPage = () => {
 	const router = useRouter();
 	const [loading, setLoading] = React.useState("");
-	const { fetchRecordings, recordings } = useRecording();
+	const [delLoading, setDelLoading] = React.useState("");
+	const { fetchRecordings, recordings, deleteRecording } = useRecording();
 
 	// Fetch recordings when component mounts (will only run if authenticated due to AuthGuard)
 	useEffect(() => {
@@ -27,6 +28,19 @@ const HistoryPage = () => {
 		}
 	};
 
+	const deleteReport = async (id: string) => {
+		try {
+			setDelLoading(id);
+			// Call API to delete recording
+			await deleteRecording(id);
+			// Refetch recordings after deletion
+			await fetchRecordings();
+		} catch (error) {
+			console.error("❌ Failed to delete recording:", error);
+		} finally {
+			setDelLoading("");
+		}
+	};
 
 	return (
 		<AuthGuard>
@@ -43,6 +57,8 @@ const HistoryPage = () => {
 								</div>
 								<div className='flex items-center space-x-2'>
 									<Button
+									isLoading={delLoading === recording.id}
+										onClick={() => deleteReport(recording.id)}
 										isIconOnly={true}
 										className='ml-auto bg-error/20 border border-error text-white hover:bg-error/30 rounded-[40%]'
 									>
