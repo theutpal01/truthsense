@@ -99,3 +99,6 @@ export const updateFeedback = ({
 
 	return interval;
 };
+
+
+export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));

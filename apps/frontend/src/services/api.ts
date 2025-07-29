@@ -12,6 +12,7 @@ class ApiService {
 
 	constructor() {
 		this.baseURL = API_BASE_URL;
+
 		// Load token from localStorage if available
 		if (typeof window !== 'undefined') {
 			this.token = localStorage.getItem('token');

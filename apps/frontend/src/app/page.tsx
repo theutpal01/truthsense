@@ -34,7 +34,7 @@ const FeatureCards = () => {
 	const {isAuthenticated} = useAuth();
 
 	return (
-		<section className="py-16 px-4 bg-background">
+		<section className="py-16 px-4 h-screen bg-background">
 			<div className="max-w-7xl mx-auto text-center">
 				<h2 className="text-5xl font-bold text-gray-900 pb-3">The <span className="text-primary">Speaking</span> App</h2>
 				<p className='text-text mb-16'>Speak with purpose and confidence</p>
@@ -43,7 +43,7 @@ const FeatureCards = () => {
 					{features.map((feature, index) => (
 						<Card
 							key={index}
-							className="p-6 shadow-md hover:shadow-lg transition"
+							className="p-6 bg-card shadow-md hover:shadow-lg transition"
 						>
 							<div className="flex items-center justify-center mb-4">{feature.icon}</div>
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">{feature.title}</h3>

@@ -35,11 +35,13 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body
-				className={`${geistSans.variable} ${lato.variable} ${inter.variable} light antialiased bg-background`}
+				className={`${geistSans.variable} ${lato.variable} ${inter.variable} light antialiased bg-background overglow-hidden`}
 			>
 				<Providers>
 					<ClientLayoutWrapper>
-						{children}
+						<div className="overflow-hidden relative min-h-screen">
+							{children}
+						</div>
 					</ClientLayoutWrapper>
 				</Providers>
 			</body>

@@ -5,15 +5,40 @@
 
 .light {
 	--background: #F5F4F3;
-	--background-card-one: #E8E6E3;
-	--background-card-two: #FFFFFD;
+	--background-card-one: #C3C3C3;
+	--background-card-two: #EFEFEF;
+	--background-active-gradient: #EFEFEF;
 	--primary: #21808D;
 	--primary-hover: #1D7480;
 	--primary-active: #1A6873;
+	--primary-active-gradient: #91C8CA;
+	--border: #BACDD7;
 	--text: #6B7280;
 	--highlight: #13343B;
 	--muted: #626C71;
 	--foreground: #171717;
+	--success: #3dc97c;
+	--warning: #d2c235;
+	--error: #c42727;
+}
+
+.dark {
+	--background: #2A2A2A;
+	--background-card-one: #1F1F1F;
+	--background-card-two: #4B4B4B7A;
+	--background-active-gradient: #808080;
+	--primary: #48B0BE;
+	--primary-hover: #38a0ad;
+	--primary-active: #3797a3;
+	--primary-active-gradient: #23636C;
+	--border: #535353;
+	--text: #C1C7CB;
+	--highlight: #BB86FC;
+	--muted: #626C71;
+	--foreground: #FFFFFF;
+	--success: #4CAF50;
+	--warning: #FFEB3B;
+	--error: #F44336;
 }
 
 @theme inline {
@@ -23,10 +48,14 @@
 	--color-primary-hover: var(--primary-hover);
 	--color-primary-active: var(--primary-active);
 	--color-text: var(--text);
+	--color-border: var(--border);
 	--color-highlight: var(--highlight);
 	--color-muted: var(--muted);
 	--color-background-card-one: var(--background-card-one);
 	--color-background-card-two: var(--background-card-two);
+	--color-success: var(--success);
+	--color-warning: var(--warning);
+	--color-error: var(--error);
 	--font-sans: var(--font-geist-sans);
 	--font-lato: var(--font-lato);
 	--font-inter: var(--font-inter);
@@ -47,10 +76,44 @@
 		z-index: -100;
 	}
 
+	.bg-card {
+		background: linear-gradient(-45deg,
+				var(--background-card-one) 0%,
+				var(--background-card-two) 100%);
+		border: 1px solid var(--border);
+	}
+
+	.bg-success {
+		background: linear-gradient(180deg,
+				#A8E6CF 0%,
+				#DCEDC1 100%);
+	}
+
+	.bg-warning {
+		background: linear-gradient(180deg,
+				#FFF9C4 0%,
+				#FFECB3 100%);
+	}
+
+	.bg-error {
+		background: linear-gradient(180deg,
+				#FFB2B2 0%,
+				#FF7A7A 100%);
+	}
+
+
 	.bg-record-btn {
 		background: linear-gradient(45deg,
 				#C3C3C3 0%,
 				#EFEFEF 50%);
+	}
+
+	.active-sidebar-btn {
+		background: linear-gradient(180deg,
+				var(--background-active-gradient) 0%,
+				var(--primary-active-gradient) 100%);
+		color: var(--primary);
+		border: 1px solid var(--border);
 	}
 
 	.bg-bar {

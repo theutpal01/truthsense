@@ -1,110 +1,73 @@
 "use client";
-import { useState, useEffect, useRef } from 'react';
-import { authAPI, recordingAPI, healthAPI, type AuthResponse, type Recording, type RecordingDomain } from '../services/apiMethods';
+import { useState, useEffect } from 'react';
+import { authAPI, recordingAPI, healthAPI, type Recording, type RecordingDomain } from '../services/apiMethods';
+import { useAuthStore } from '@/stores/authStore';
 
-// Authentication hook
 export const useAuth = () => {
-  const [user, setUser] = useState<AuthResponse['user'] | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true); // Add initial loading state
-  const [error, setError] = useState<string | null>(null);	// Send OTP
-	const sendOTP = async (email: string) => {
-		setIsLoading(true);
-		setError(null);
-		try {
-			const response = await authAPI.sendOTP(email);
-			return response;
-		} catch (err) {
-			const errorMessage = err instanceof Error ? err.message : 'Failed to send OTP';
-			setError(errorMessage);
-			throw err;
-		} finally {
-			setIsLoading(false);
-		}
-	};
+	const {
+		user,
+		token,
+		isLoading,
+		login,
+		logout,
+		sendOTP,
+		verifyOTP,
+		error,
+		setLoading,
+		setUser,
+		hasHydrated
+	} = useAuthStore();
 
-	// Verify OTP and login
-	const verifyOTP = async (email: string, code: string) => {
-		setIsLoading(true);
-		setError(null);
-		try {
-			const response = await authAPI.verifyOTP(email, code);
-			if (response.success && response.user) {
-				setUser(response.user);
-			}
-			return response;
-		} catch (err) {
-			const errorMessage = err instanceof Error ? err.message : 'Failed to verify OTP';
-			setError(errorMessage);
-			throw err;
-		} finally {
-			setIsLoading(false);
-		}
-	};
-
-	// Logout
-	const logout = () => {
-		authAPI.logout();
-		setUser(null);
-	};
-
-	// Check if user is logged in on mount
 	useEffect(() => {
-		let isMounted = true;
-		
-		const checkAuth = async () => {
-			// Don't check if component is unmounted
-			if (!isMounted) return;
-			
-			setIsInitialLoading(true);
+		if (!hasHydrated) return;
+
+		const initAuth = async () => {
+			if (!token) {
+				logout(); // optional, in case token expired
+				setLoading(false);
+				return;
+			}
+
+			if (user) {
+				setLoading(false);
+				return;
+			}
+
 			try {
-				const response = await authAPI.getProfile();
-				if (response.success && response.user && isMounted) {
-					setUser(response.user);
+				setLoading(true);
+				const res = await authAPI.getProfile();
+				if (res.success && res.user) {
+					setUser(res.user);
+				} else {
+					logout(); // fallback if user fetch fails
 				}
-			} catch (error) {
-				// Handle different types of errors
-				if (error instanceof Error) {
-					console.log('Auth check error:', error.message);
-					// Don't treat rate limiting as authentication failure
-					if (error.message.includes('Too many requests')) {
-						console.log('Rate limited, will retry later');
-						return; // Don't logout on rate limit
-					}
-				}
-				// User is not authenticated
-				if (isMounted) {
-					authAPI.logout();
-				}
+			} catch (e: any) {
+				if (e?.response?.status === 401) logout();
 			} finally {
-				if (isMounted) {
-					setIsInitialLoading(false);
-				}
+				setLoading(false);
 			}
 		};
 
-		// Only check if we don't already have a user and no token exists
-		const existingToken = localStorage.getItem('authToken');
-		if (!user && existingToken) {
-			checkAuth();
-		} else {
-			setIsInitialLoading(false);
-		}
+		initAuth();
+	}, [token, hasHydrated, user, setLoading, setUser, logout]);
 
-		// Cleanup function
-		return () => {
-			isMounted = false;
-		};
-	}, []); // Keep empty dependency array
+	useEffect(() => {
+		console.log("Auth status →", { isAuth: !!user, isLoading });
+	}, [user, isLoading]);
+
+	const isAuthenticated = !!user;
 
 	return {
 		user,
-		isLoading: isLoading || isInitialLoading, // Combined loading state
+		token,
+		isAuthenticated,
+		isLoading: isLoading || !hasHydrated,
+		login,
 		error,
 		sendOTP,
 		verifyOTP,
 		logout,
-		isAuthenticated: !!user
+		hasHydrated,
 	};
 };
 
