@@ -1,45 +1,72 @@
 "use client";
-import { useAuth, useRecording } from '@/hooks/useAPI'
-import { useRouter } from 'next/navigation';
+import { useRecording } from '@/hooks/useAPI'
+import { AuthGuard } from '@/services/auth-guard';
+import { Button } from '@heroui/react';
+import { useRouter } from "next/navigation";
 import React, { useEffect } from 'react'
+import { FaTrash } from 'react-icons/fa';
+import { FaChevronRight } from 'react-icons/fa6';
 
 const HistoryPage = () => {
-	const { isAuthenticated, user, isLoading } = useAuth();
-	const { fetchRecordings, recordings } = useRecording();
 	const router = useRouter();
+	const [loading, setLoading] = React.useState("");
+	const { fetchRecordings, recordings } = useRecording();
 
+	// Fetch recordings when component mounts (will only run if authenticated due to AuthGuard)
 	useEffect(() => {
-		if (!isLoading && isAuthenticated === false && user === null) {
-			router.push('/auth/login');
-		}
-	}, [isAuthenticated, user, isLoading, router]);
-
-
-	useEffect(() => {
-		if (isAuthenticated) {
+		if (recordings.length === 0) {
 			fetchRecordings();
 		}
-	}, [isAuthenticated, fetchRecordings]);
+	}, [fetchRecordings, recordings.length]);
+
+	const handleNavigation = (e: React.MouseEvent) => {
+		const recordingId = e.currentTarget.getAttribute('data-id');
+		setLoading(recordingId || "");
+		if (recordingId) {
+			router.push(`/feedback/${recordingId}`);
+		}
+	};
 
 
 	return (
-		<div className='container mx-auto flex flex-col h-screen px-16 py-8'>
-			<h2 className='text-2xl font-bold text-primary'>History</h2>
-			<div className='flex-1 overflow-y-auto'>
-				{recordings.length > 0 ? (
-					recordings.map((recording) => (
-						<div key={recording.id} className='bg-white shadow-md rounded-lg p-4 mb-4'>
-							<h3 className='text-lg font-semibold'>{recording.domain[0]?.toUpperCase() + recording.domain.slice(1)}</h3>
-							<p className='text-gray-600'>Date: {new Date(recording.createdAt).toLocaleDateString()}</p>
-							<p className='text-gray-600'>Duration: {recording.duration} seconds</p>
-							<a href={`/recording/${recording.id}`} className='text-primary hover:underline'>View Recording</a>
-						</div>
-					))
-				) : (
-					<p>No recordings found.</p>
-				)}
+		<AuthGuard>
+			<div className='container w-full h-screen overflow-hidden'>
+				<h2 className='text-2xl font-bold px-16 py-8 text-primary'>History</h2>
+				<div className='flex flex-col max-w-full py-8 px-16 overflow-y-auto w-full h-[90vh]'>
+					{recordings.length > 0 ? (
+						recordings.map((recording) => (
+							<div key={recording.id} className='bg-card bg-white shadow-md w-full rounded-xl p-4 mb-4 flex justify-between items-center'>
+								<div className='flex flex-col'>
+									<h3 className='text-lg font-semibold text-text'>{recording.domain[0]?.toUpperCase() + recording.domain.slice(1)}</h3>
+									<p className='text-muted'>Date: {new Date(recording.createdAt).toLocaleDateString()}</p>
+									<p className='text-muted'>Duration: {recording.duration} seconds</p>
+								</div>
+								<div className='flex items-center space-x-2'>
+									<Button
+										isIconOnly={true}
+										className='ml-auto bg-error/20 border border-error text-white hover:bg-error/30 rounded-[40%]'
+									>
+										<FaTrash className='text-error' />
+									</Button>
+									<Button
+										key={recording.id}
+										data-id={recording.id}
+										isLoading={loading == recording.id}
+										isIconOnly={true}
+										onClick={handleNavigation}
+										className='ml-auto bg-primary/20 border border-primary text-white hover:bg-primary-hover/40 rounded-[40%]'
+									>
+										<FaChevronRight className='text-primary' />
+									</Button>
+								</div>
+							</div>
+						))
+					) : (
+						<p className='text-muted'>No recordings found.</p>
+					)}
+				</div>
 			</div>
-		</div>
+		</AuthGuard>
 	)
 }
 
