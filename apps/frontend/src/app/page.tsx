@@ -36,7 +36,7 @@ const FeatureCards = () => {
 	return (
 		<section className="py-16 px-4 h-screen bg-background">
 			<div className="max-w-7xl mx-auto text-center">
-				<h2 className="text-5xl font-bold text-gray-900 pb-3">The <span className="text-primary">Speaking</span> App</h2>
+				<h2 className="text-5xl font-semibold text-primary/75 pb-3">The <span className="text-primary font-bold">Speaking</span> App</h2>
 				<p className='text-text mb-16'>Speak with purpose and confidence</p>
 
 				<div className="grid md:grid-cols-3 gap-8">
@@ -46,9 +46,9 @@ const FeatureCards = () => {
 							className="p-6 bg-card shadow-md hover:shadow-lg transition"
 						>
 							<div className="flex items-center justify-center mb-4">{feature.icon}</div>
-							<h3 className="text-xl font-semibold text-gray-800 mb-2">{feature.title}</h3>
-							<p className="text-gray-600 text-sm mb-4">{feature.description}</p>
-							<ul className="text-left text-sm text-gray-500 list-disc pl-5 space-y-1">
+							<h3 className="text-xl font-semibold text-primary mb-2">{feature.title}</h3>
+							<p className="text-text text-sm mb-4">{feature.description}</p>
+							<ul className="text-left text-sm text-muted list-disc pl-5 space-y-1">
 								{feature.bullets.map((point, i) => (
 									<li key={i}>{point}</li>
 								))}

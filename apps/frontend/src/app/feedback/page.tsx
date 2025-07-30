@@ -6,7 +6,7 @@ const FeedbackPage = () => {
 	return (
 		<AuthGuard>
 			<div className='h-screen w-full p-8 flex justify-center items-center'>
-				<p className='text-gray-600 mt-4'>Invalid feedback item selected.</p>
+				<p className='text-text mt-4'>Invalid feedback item selected.</p>
 			</div>
 		</AuthGuard>
 	)

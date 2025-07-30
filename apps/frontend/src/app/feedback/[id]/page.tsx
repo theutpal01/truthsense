@@ -1,10 +1,10 @@
-import { AuthGuard } from '@/services/auth-guard';
 import Report from './ReportClient';
 
-export default function ReportPage({ params }: { params: { id: string } }) {
-	return (
-		<AuthGuard>
-			<Report id={params.id} />
-		</AuthGuard>
-	);
+export default async function ReportPage({
+	params,
+}: {
+	params: Promise<{ id: string }>
+}) {
+	const { id } = await params;
+	return <Report id={id} />;
 }
