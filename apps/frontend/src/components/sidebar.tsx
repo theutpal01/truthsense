@@ -91,17 +91,17 @@ const Sidebar = () => {
 			<div className="flex flex-col items-center justify-end flex-1 w-full ">
 
 				<div className="h-full flex-3/4 gap-6 flex flex-col items-center justify-center">
-					<FaRegSun className="text-text" />
+					<FaRegSun className={theme == "light" ? "text-primary" : "text-text"} />
 					<Switch
 						classNames={{
 							base: "rotate-90",
-							wrapper: "rounded-lg bg-theme-btn h-8 w-14",
-							thumb: "rounded bg-thumb h-6 w-6 m-0",
+							wrapper: "rounded-lg inset-shadow bg-theme-btn h-8 w-14",
+							thumb: "rounded bg-thumb drop-shadow h-6 w-6 m-0",
 						}}
 						defaultChecked={theme == "dark"}						
 						onChange={(e) => handleThemeChange(e.target.checked)}
 					/>
-					<FaRegMoon className="text-text" />
+					<FaRegMoon className={theme == "dark" ? "text-primary" : "text-text"} />
 				</div>
 
 				{/* Bottom Action */}
