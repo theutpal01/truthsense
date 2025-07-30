@@ -165,6 +165,14 @@ class RecordingController {
       if (result.recording.status === 'processed' && result.recording.analysisResult) {
         response.analysis = result.recording.analysisResult;
         response.processedAt = result.recording.processedAt;
+        
+        // Ensure info fields are present in the analysis
+        if (response.analysis && !response.analysis.info) {
+          response.analysis.info = {
+            category: result.recording.domain || 'general',
+            reportCreated: result.recording.processedAt || new Date().toISOString()
+          };
+        }
       } else if (result.recording.status === 'failed') {
         response.error = result.recording.errorMessage || 'Processing failed';
       }

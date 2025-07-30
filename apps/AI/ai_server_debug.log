@@ -1,0 +1,212 @@
+/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/pydub/utils.py:170: RuntimeWarning: Couldn't find ffmpeg or avconv - defaulting to ffmpeg, but may not work
+  warn("Couldn't find ffmpeg or avconv - defaulting to ffmpeg, but may not work", RuntimeWarning)
+2025-07-30 21:31:30,114 - __main__ - INFO - Starting AI service server on 127.0.0.1:8003
+INFO:     Started server process [80039]
+INFO:     Waiting for application startup.
+/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/sklearn/base.py:442: InconsistentVersionWarning: Trying to unpickle estimator GridSearchCV from version 1.7.0 when using version 1.7.1. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+2025-07-30 21:31:30,240 - ai_server - INFO - Fluency model loaded successfully
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8003 (Press CTRL+C to quit)
+INFO:     127.0.0.1:56779 - "POST /analyze HTTP/1.1" 200 OK
+2025-07-30 21:31:51,141 - ai_server - INFO - Starting analysis for recording test-recording-id
+2025-07-30 21:31:51,176 - root - INFO - Transcribing audio with 1 chunks
+INFO:     127.0.0.1:56779 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56784 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+2025-07-30 21:31:56,221 - groq._base_client - INFO - Retrying request to /openai/v1/audio/transcriptions in 0.422682 seconds
+INFO:     127.0.0.1:56788 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56790 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56792 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56795 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56796 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56799 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56802 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56803 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+2025-07-30 21:32:39,817 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/audio/transcriptions "HTTP/1.1 200 OK"
+2025-07-30 21:32:39,821 - root - INFO - Transcription completed: 1/1 chunks successful
+2025-07-30 21:32:40,270 - ai_server - ERROR - Analysis failed for recording test-recording-id: No module named '_lzma'
+Traceback (most recent call last):
+  File "/Users/sarveshdakhore/Desktop/GDSC/truthsense/apps/AI/ai_server.py", line 222, in process_analysis
+    analysis_result = await get_feedback(
+                      ^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "/Users/sarveshdakhore/Desktop/GDSC/truthsense/apps/AI/main.py", line 32, in get_feedback
+    audio_features = await extract_features(audio_path, fluency_model, llm_client, feature_progress_callback)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sarveshdakhore/Desktop/GDSC/truthsense/apps/AI/audio_utils.py", line 349, in extract_features
+    baseline_feats = extract_features_from_wave(baseline_data, sr)
+  File "/Users/sarveshdakhore/Desktop/GDSC/truthsense/apps/AI/audio_utils.py", line 296, in extract_features_from_wave
+    **extract_librosa_features(data, sr),
+      ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "/Users/sarveshdakhore/Desktop/GDSC/truthsense/apps/AI/audio_utils.py", line 229, in extract_librosa_features
+    zcr = np.mean(librosa.feature.zero_crossing_rate(data))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/lazy_loader/__init__.py", line 82, in __getattr__
+    submod = importlib.import_module(submod_path)
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/importlib/__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 1022, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/librosa/feature/spectral.py", line 10, in <module>
+    from .. import filters
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/lazy_loader/__init__.py", line 79, in __getattr__
+    return importlib.import_module(f"{package_name}.{name}")
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/importlib/__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/librosa/filters.py", line 59, in <module>
+    from .core.convert import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/librosa/core/convert.py", line 6, in <module>
+    from . import notation
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/librosa/core/notation.py", line 9, in <module>
+    from .intervals import INTERVALS
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/librosa/core/intervals.py", line 12, in <module>
+    from ..util.files import _resource_file
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/librosa/util/files.py", line 16, in <module>
+    import pooch
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/pooch/__init__.py", line 19, in <module>
+    from .processors import Unzip, Untar, Decompress
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/pooch/processors.py", line 15, in <module>
+    import lzma
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/lzma.py", line 27, in <module>
+    from _lzma import *
+ModuleNotFoundError: No module named '_lzma'
+
+INFO:     127.0.0.1:56805 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56806 - "POST /analyze HTTP/1.1" 200 OK
+2025-07-30 21:32:46,308 - ai_server - INFO - Starting analysis for recording test-recording-id
+2025-07-30 21:32:46,321 - root - INFO - Transcribing audio with 1 chunks
+INFO:     127.0.0.1:56806 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56808 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56813 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+2025-07-30 21:33:00,454 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/audio/transcriptions "HTTP/1.1 200 OK"
+2025-07-30 21:33:00,459 - root - INFO - Transcription completed: 1/1 chunks successful
+2025-07-30 21:33:00,466 - ai_server - ERROR - Analysis failed for recording test-recording-id: No module named '_lzma'
+Traceback (most recent call last):
+  File "/Users/sarveshdakhore/Desktop/GDSC/truthsense/apps/AI/ai_server.py", line 222, in process_analysis
+    analysis_result = await get_feedback(
+                      ^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "/Users/sarveshdakhore/Desktop/GDSC/truthsense/apps/AI/main.py", line 32, in get_feedback
+    audio_features = await extract_features(audio_path, fluency_model, llm_client, feature_progress_callback)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sarveshdakhore/Desktop/GDSC/truthsense/apps/AI/audio_utils.py", line 349, in extract_features
+    baseline_feats = extract_features_from_wave(baseline_data, sr)
+  File "/Users/sarveshdakhore/Desktop/GDSC/truthsense/apps/AI/audio_utils.py", line 296, in extract_features_from_wave
+    **extract_librosa_features(data, sr),
+      ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "/Users/sarveshdakhore/Desktop/GDSC/truthsense/apps/AI/audio_utils.py", line 229, in extract_librosa_features
+    zcr = np.mean(librosa.feature.zero_crossing_rate(data))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/lazy_loader/__init__.py", line 82, in __getattr__
+    submod = importlib.import_module(submod_path)
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/importlib/__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 1022, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/librosa/feature/spectral.py", line 10, in <module>
+    from .. import filters
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/lazy_loader/__init__.py", line 79, in __getattr__
+    return importlib.import_module(f"{package_name}.{name}")
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/importlib/__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/librosa/filters.py", line 59, in <module>
+    from .core.convert import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/librosa/core/convert.py", line 6, in <module>
+    from . import notation
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/librosa/core/notation.py", line 9, in <module>
+    from .intervals import INTERVALS
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/librosa/core/intervals.py", line 12, in <module>
+    from ..util.files import _resource_file
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/librosa/util/files.py", line 16, in <module>
+    import pooch
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/pooch/__init__.py", line 19, in <module>
+    from .processors import Unzip, Untar, Decompress
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/pooch/processors.py", line 15, in <module>
+    import lzma
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/lzma.py", line 27, in <module>
+    from _lzma import *
+ModuleNotFoundError: No module named '_lzma'
+
+INFO:     127.0.0.1:56815 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56817 - "POST /analyze HTTP/1.1" 200 OK
+2025-07-30 21:33:06,367 - ai_server - INFO - Starting analysis for recording test-recording-id
+2025-07-30 21:33:06,376 - root - INFO - Transcribing audio with 1 chunks
+INFO:     127.0.0.1:56817 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+2025-07-30 21:33:08,029 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/audio/transcriptions "HTTP/1.1 200 OK"
+2025-07-30 21:33:08,031 - root - INFO - Transcription completed: 1/1 chunks successful
+2025-07-30 21:33:08,047 - ai_server - ERROR - Analysis failed for recording test-recording-id: No module named '_lzma'
+Traceback (most recent call last):
+  File "/Users/sarveshdakhore/Desktop/GDSC/truthsense/apps/AI/ai_server.py", line 222, in process_analysis
+    analysis_result = await get_feedback(
+                      ^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "/Users/sarveshdakhore/Desktop/GDSC/truthsense/apps/AI/main.py", line 32, in get_feedback
+    audio_features = await extract_features(audio_path, fluency_model, llm_client, feature_progress_callback)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sarveshdakhore/Desktop/GDSC/truthsense/apps/AI/audio_utils.py", line 349, in extract_features
+    baseline_feats = extract_features_from_wave(baseline_data, sr)
+  File "/Users/sarveshdakhore/Desktop/GDSC/truthsense/apps/AI/audio_utils.py", line 296, in extract_features_from_wave
+    **extract_librosa_features(data, sr),
+      ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "/Users/sarveshdakhore/Desktop/GDSC/truthsense/apps/AI/audio_utils.py", line 229, in extract_librosa_features
+    zcr = np.mean(librosa.feature.zero_crossing_rate(data))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/lazy_loader/__init__.py", line 82, in __getattr__
+    submod = importlib.import_module(submod_path)
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/importlib/__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 1022, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/librosa/feature/spectral.py", line 10, in <module>
+    from .. import filters
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/lazy_loader/__init__.py", line 79, in __getattr__
+    return importlib.import_module(f"{package_name}.{name}")
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/importlib/__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/librosa/filters.py", line 59, in <module>
+    from .core.convert import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/librosa/core/convert.py", line 6, in <module>
+    from . import notation
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/librosa/core/notation.py", line 9, in <module>
+    from .intervals import INTERVALS
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/librosa/core/intervals.py", line 12, in <module>
+    from ..util.files import _resource_file
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/librosa/util/files.py", line 16, in <module>
+    import pooch
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/pooch/__init__.py", line 19, in <module>
+    from .processors import Unzip, Untar, Decompress
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/pooch/processors.py", line 15, in <module>
+    import lzma
+  File "/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/lzma.py", line 27, in <module>
+    from _lzma import *
+ModuleNotFoundError: No module named '_lzma'
+
+INFO:     127.0.0.1:56821 - "GET /status/test-recording-id HTTP/1.1" 200 OK

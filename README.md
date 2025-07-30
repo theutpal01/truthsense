@@ -1,135 +1,190 @@
-# Turborepo starter
+# TruthSense - AI-Powered Speech & Posture Analysis
 
-This Turborepo starter is maintained by the Turborepo core team.
+TruthSense is a comprehensive application that analyzes speech patterns and posture to provide detailed feedback for presentations, interviews, and public speaking.
 
-## Using this example
+## Architecture
 
-Run the following command:
+- **Frontend**: Next.js application with real-time audio recording and posture analysis
+- **Backend**: Node.js/Express API with Redis-based background job processing  
+- **AI Service**: Python FastAPI service with speech analysis and transcription
+- **Database**: SQLite with Sequelize ORM
 
-```sh
-npx create-turbo@latest
-```
+## Services
 
-## What's inside?
+### 1. Frontend (Next.js)
+- Real-time audio recording
+- MediaPipe-based posture analysis  
+- Interactive feedback visualization
+- Authentication and user management
 
-This Turborepo includes the following packages/apps:
+### 2. Backend (Node.js)
+- RESTful API endpoints
+- File upload and storage
+- Background job processing with Bull/Redis
+- User authentication with JWT
+- Atomic database transactions
 
-### Apps and Packages
+### 3. AI Service (Python)
+- Speech transcription with Groq/Whisper
+- Audio feature extraction with librosa
+- Posture analysis integration
+- LLM-powered feedback generation
+- Timeout handling and retry logic
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+## Apps and Packages
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+- `apps/frontend`: Next.js frontend application
+- `apps/truthsense_backend`: Node.js/Express backend API
+- `apps/AI`: Python FastAPI AI analysis service
 
-### Utilities
+Each service is designed to work independently with clear API boundaries.
 
-This Turborepo has some additional tools already setup for you:
+## Getting Started
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+### Prerequisites
+- Node.js 18+
+- Python 3.8+
+- Redis server
+- Groq API key
 
-### Build
+### Installation
 
-To build all apps and packages, run the following command:
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd truthsense
+   ```
 
-```
-cd my-turborepo
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
+3. **Set up environment variables**
+   
+   Backend (.env):
+   ```bash
+   cp apps/truthsense_backend/.env.example apps/truthsense_backend/.env
+   # Edit with your configuration
+   ```
+   
+   AI Service (.env):
+   ```bash
+   cp apps/AI/.env.example apps/AI/.env  
+   # Add your GROQ_API_KEY
+   ```
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
-```
+4. **Start Redis server**
+   ```bash
+   redis-server
+   ```
 
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+5. **Start the AI service**
+   ```bash
+   cd apps/AI
+   ./start_server.sh
+   ```
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+6. **Start the backend**
+   ```bash
+   cd apps/truthsense_backend
+   npm run dev
+   ```
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+7. **Start the frontend**
+   ```bash
+   cd apps/frontend
+   npm run dev
+   ```
 
-### Develop
+### Development
 
 To develop all apps and packages, run the following command:
 
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
+```bash
+npm run dev  # Starts all services with turbo
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+### Build
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
+To build all apps and packages:
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+```bash
+npm run build
 ```
 
-### Remote Caching
+### API Endpoints
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+#### Backend (Port 8002)
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `POST /api/recordings` - Create recording session
+- `POST /api/recordings/:id/upload` - Upload audio + posture data
+- `GET /api/recordings/:id` - Get analysis results
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+#### AI Service (Port 8003)  
+- `POST /analyze` - Submit audio for analysis
+- `GET /status/:recording_id` - Check analysis progress
+- `GET /health` - Service health check
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+## Audio Processing Flow
 
-```
-cd my-turborepo
+1. **Frontend** records audio and captures posture data
+2. **Backend** receives upload, saves files, queues AI job
+3. **AI Service** processes audio with timeout handling:
+   - Splits large files into chunks
+   - Transcribes with retry logic  
+   - Extracts speech features
+   - Generates LLM feedback
+4. **Backend** polls for completion, updates database atomically
+5. **Frontend** displays comprehensive analysis results
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
+## Key Features
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
+### Improved Reliability
+- **Timeout Handling**: Transcription requests have configurable timeouts with exponential backoff
+- **Retry Logic**: Failed chunks are retried up to 3 times
+- **Atomic Transactions**: Database updates are atomic to prevent inconsistent states
+- **Progress Tracking**: Real-time progress updates during processing
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+### Speech Analysis
+- Transcription accuracy with Groq's Whisper-large-v3
+- Speech rate, clarity, and fluency analysis
+- Pause detection and filler word counting
+- Pronunciation and articulation feedback
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+### Posture Analysis  
+- Real-time posture tracking with MediaPipe
+- Eye contact percentage calculation
+- Gesture and confidence scoring
+- Integrated feedback with speech analysis
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
+## Environment Variables
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
+### Backend
+- `AI_SERVICE_URL`: URL of Python AI service (default: http://127.0.0.1:8003)
+- `REDIS_URL`: Redis connection string
+- `JWT_SECRET`: Secret for JWT tokens
+- `DB_PATH`: SQLite database path
 
-## Useful Links
+### AI Service  
+- `GROQ_API_KEY`: Required Groq API key
+- `AI_SERVER_HOST`: Server host (default: 127.0.0.1)
+- `AI_SERVER_PORT`: Server port (default: 8003)
 
-Learn more about the power of Turborepo:
+## Troubleshooting
 
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+### Transcription Timeouts
+- Increase timeout values in `audio_utils.py`
+- Check Groq API rate limits
+- Verify network connectivity
+
+### Processing Failures
+- Check Redis connection
+- Verify file permissions for audio storage
+- Monitor AI service logs
+
+### Database Issues
+- Ensure SQLite file is writable
+- Check transaction logs for deadlocks
+- Verify model associations are correct

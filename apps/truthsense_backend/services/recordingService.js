@@ -1,4 +1,4 @@
-const { Recording } = require('../models');
+const { Recording, sequelize } = require('../models');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fs = require('fs').promises;
@@ -116,16 +116,21 @@ class RecordingService {
   }
 
   async saveAudioFile(recordingId, userId, audioFile, postureFeatures) {
+    const transaction = await sequelize.transaction();
+    
     try {
       const recording = await Recording.findOne({
-        where: { id: recordingId, userId }
+        where: { id: recordingId, userId },
+        transaction
       });
 
       if (!recording) {
+        await transaction.rollback();
         return { success: false, error: 'Recording not found' };
       }
 
       if (recording.status !== 'completed') {
+        await transaction.rollback();
         return { success: false, error: 'Recording must be completed first' };
       }
 
@@ -136,29 +141,44 @@ class RecordingService {
       // Ensure directory exists
       await fs.mkdir(path.dirname(filePath), { recursive: true });
 
-      // Save file
+      // Save file (outside transaction as it's a file operation)
       await fs.writeFile(filePath, audioFile.buffer);
 
-      // Update recording with file info and posture features
-      await recording.update({
-        audioFileName: fileName,
-        audioFilePath: filePath,
-        audioFileSize: audioFile.size,
-        mimeType: audioFile.mimetype,
-        postureFeatures,
-        status: 'processing',
-        processingStartedAt: new Date()
-      });
+      try {
+        // Update recording with file info and posture features within transaction
+        await recording.update({
+          audioFileName: fileName,
+          audioFilePath: filePath,
+          audioFileSize: audioFile.size,
+          mimeType: audioFile.mimetype,
+          postureFeatures,
+          status: 'processing',
+          processingStartedAt: new Date()
+        }, { transaction });
 
-      return {
-        success: true,
-        recording: {
-          id: recording.id,
-          status: recording.status,
-          audioFileName: fileName
+        await transaction.commit();
+
+        return {
+          success: true,
+          recording: {
+            id: recording.id,
+            status: 'processing', // Update to reflect new status
+            audioFileName: fileName
+          }
+        };
+
+      } catch (dbError) {
+        // If database update fails, clean up the file
+        try {
+          await fs.unlink(filePath);
+        } catch (cleanupError) {
+          console.warn('⚠️ Failed to cleanup file after DB error:', cleanupError);
         }
-      };
+        throw dbError;
+      }
+
     } catch (error) {
+      await transaction.rollback();
       console.error('❌ Save audio file error:', error);
       return { success: false, error: error.message };
     }

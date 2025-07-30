@@ -1,0 +1,58 @@
+/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/pydub/utils.py:170: RuntimeWarning: Couldn't find ffmpeg or avconv - defaulting to ffmpeg, but may not work
+  warn("Couldn't find ffmpeg or avconv - defaulting to ffmpeg, but may not work", RuntimeWarning)
+2025-07-30 21:25:14,385 - __main__ - INFO - Starting AI service server on 127.0.0.1:8003
+INFO:     Started server process [73878]
+INFO:     Waiting for application startup.
+/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/sklearn/base.py:442: InconsistentVersionWarning: Trying to unpickle estimator GridSearchCV from version 1.7.0 when using version 1.7.1. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+2025-07-30 21:25:14,473 - ai_server - INFO - Fluency model loaded successfully
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8003 (Press CTRL+C to quit)
+INFO:     127.0.0.1:56104 - "POST /analyze HTTP/1.1" 200 OK
+2025-07-30 21:25:24,289 - ai_server - INFO - Starting analysis for recording test-123
+2025-07-30 21:25:24,331 - root - INFO - Transcribing audio with 1 chunks
+INFO:     127.0.0.1:56126 - "GET /status/test-123 HTTP/1.1" 200 OK
+2025-07-30 21:25:33,200 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/audio/transcriptions "HTTP/1.1 200 OK"
+2025-07-30 21:25:33,204 - root - INFO - Transcription completed: 1/1 chunks successful
+2025-07-30 21:25:33,543 - ai_server - ERROR - Analysis failed for recording test-123: No module named '_lzma'
+INFO:     127.0.0.1:56156 - "GET /status/test-123 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56424 - "POST /analyze HTTP/1.1" 200 OK
+2025-07-30 21:27:26,186 - ai_server - INFO - Starting analysis for recording test-recording-id
+2025-07-30 21:27:26,198 - root - INFO - Transcribing audio with 1 chunks
+INFO:     127.0.0.1:56424 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56427 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56433 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+2025-07-30 21:27:41,499 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/audio/transcriptions "HTTP/1.1 200 OK"
+2025-07-30 21:27:41,501 - root - INFO - Transcription completed: 1/1 chunks successful
+2025-07-30 21:27:41,517 - ai_server - ERROR - Analysis failed for recording test-recording-id: No module named '_lzma'
+INFO:     127.0.0.1:56434 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56435 - "POST /analyze HTTP/1.1" 200 OK
+2025-07-30 21:27:51,243 - ai_server - INFO - Starting analysis for recording test-recording-id
+2025-07-30 21:27:51,258 - root - INFO - Transcribing audio with 1 chunks
+INFO:     127.0.0.1:56435 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56437 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56441 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56442 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+2025-07-30 21:28:10,359 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/audio/transcriptions "HTTP/1.1 200 OK"
+2025-07-30 21:28:10,361 - root - INFO - Transcription completed: 1/1 chunks successful
+2025-07-30 21:28:10,369 - ai_server - ERROR - Analysis failed for recording test-recording-id: No module named '_lzma'
+INFO:     127.0.0.1:56449 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56473 - "POST /analyze HTTP/1.1" 200 OK
+2025-07-30 21:28:16,312 - ai_server - INFO - Starting analysis for recording test-recording-id
+2025-07-30 21:28:16,329 - root - INFO - Transcribing audio with 1 chunks
+INFO:     127.0.0.1:56473 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56476 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56478 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56487 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56492 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56495 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56498 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56499 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56500 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56502 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+2025-07-30 21:29:03,111 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/audio/transcriptions "HTTP/1.1 200 OK"
+2025-07-30 21:29:03,114 - root - INFO - Transcription completed: 1/1 chunks successful
+2025-07-30 21:29:03,130 - ai_server - ERROR - Analysis failed for recording test-recording-id: No module named '_lzma'
+INFO:     127.0.0.1:56511 - "GET /status/test-recording-id HTTP/1.1" 200 OK

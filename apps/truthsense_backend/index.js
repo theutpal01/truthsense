@@ -13,6 +13,7 @@ const authService = require('./services/authService');
 // Import routes
 const authRoutes = require('./routes/auth');
 const recordingRoutes = require('./routes/recordings');
+const testRoutes = require('./routes/test');
 
 // Import middleware
 const { apiLimiter } = require('./middleware/rateLimiter');
@@ -65,6 +66,7 @@ app.get('/', (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/recordings', recordingRoutes);
+app.use('/api/test', testRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

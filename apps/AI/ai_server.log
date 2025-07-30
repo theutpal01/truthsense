@@ -1,0 +1,47 @@
+/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/pydub/utils.py:170: RuntimeWarning: Couldn't find ffmpeg or avconv - defaulting to ffmpeg, but may not work
+  warn("Couldn't find ffmpeg or avconv - defaulting to ffmpeg, but may not work", RuntimeWarning)
+2025-07-30 21:20:09,231 - __main__ - INFO - Starting AI service server on 127.0.0.1:8003
+INFO:     Started server process [69745]
+INFO:     Waiting for application startup.
+/Users/sarveshdakhore/.pyenv/versions/3.13.0/lib/python3.13/site-packages/sklearn/base.py:442: InconsistentVersionWarning: Trying to unpickle estimator GridSearchCV from version 1.7.0 when using version 1.7.1. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+2025-07-30 21:20:09,322 - ai_server - INFO - Fluency model loaded successfully
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8003 (Press CTRL+C to quit)
+INFO:     127.0.0.1:55581 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55608 - "POST /analyze HTTP/1.1" 200 OK
+2025-07-30 21:20:26,087 - ai_server - INFO - Starting analysis for recording test-recording-id
+2025-07-30 21:20:26,123 - root - INFO - Transcribing audio with 1 chunks
+INFO:     127.0.0.1:55608 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55613 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55619 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55621 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+2025-07-30 21:20:42,278 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/audio/transcriptions "HTTP/1.1 200 OK"
+2025-07-30 21:20:42,280 - root - INFO - Transcription completed: 1/1 chunks successful
+2025-07-30 21:20:51,850 - ai_server - ERROR - Analysis failed for recording test-recording-id: No module named '_lzma'
+INFO:     127.0.0.1:55625 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55626 - "POST /analyze HTTP/1.1" 200 OK
+2025-07-30 21:20:56,868 - ai_server - INFO - Starting analysis for recording test-recording-id
+2025-07-30 21:20:56,885 - root - INFO - Transcribing audio with 1 chunks
+INFO:     127.0.0.1:55626 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55629 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55630 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55632 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55635 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55636 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+2025-07-30 21:21:25,443 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/audio/transcriptions "HTTP/1.1 200 OK"
+2025-07-30 21:21:25,447 - root - INFO - Transcription completed: 1/1 chunks successful
+2025-07-30 21:21:25,460 - ai_server - ERROR - Analysis failed for recording test-recording-id: No module named '_lzma'
+INFO:     127.0.0.1:55637 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55645 - "POST /analyze HTTP/1.1" 200 OK
+2025-07-30 21:21:31,946 - ai_server - INFO - Starting analysis for recording test-recording-id
+2025-07-30 21:21:31,956 - root - INFO - Transcribing audio with 1 chunks
+INFO:     127.0.0.1:55645 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55648 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55650 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+2025-07-30 21:21:46,453 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/audio/transcriptions "HTTP/1.1 200 OK"
+2025-07-30 21:21:46,456 - root - INFO - Transcription completed: 1/1 chunks successful
+2025-07-30 21:21:46,463 - ai_server - ERROR - Analysis failed for recording test-recording-id: No module named '_lzma'
+INFO:     127.0.0.1:55651 - "GET /status/test-recording-id HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55970 - "POST /analyze HTTP/1.1" 400 Bad Request

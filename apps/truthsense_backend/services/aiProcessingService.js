@@ -1,6 +1,9 @@
 const Queue = require('bull');
 const recordingService = require('./recordingService');
-const { Recording } = require('../models');
+const { Recording, sequelize } = require('../models');
+const FormData = require('form-data');
+const fs = require('fs');
+const fetch = require('node-fetch');
 
 class AIProcessingService {
 	constructor() {
@@ -26,35 +29,70 @@ class AIProcessingService {
 			const { recordingId } = job.data;
 			console.log(`🔄 Processing recording: ${recordingId}`);
 
+			const transaction = await sequelize.transaction();
+			
 			try {
-				// Get recording data
-				const recording = await Recording.findByPk(recordingId);
+				// Get recording data within transaction
+				const recording = await Recording.findByPk(recordingId, { transaction });
 				if (!recording) {
 					throw new Error('Recording not found');
 				}
 
-				// Simulate AI processing (replace with actual AI service call)
+				// Update status to processing within transaction
+				await recording.update({
+					status: 'processing',
+					processingStartedAt: new Date()
+				}, { transaction });
+
+				// Commit the processing start status
+				await transaction.commit();
+
+				// Perform AI analysis (outside transaction as it's long-running)
 				const analysisResult = await this.performAIAnalysis(recording);
 
-				// Update recording with results
-				await recordingService.updateRecordingStatus(
-					recordingId,
-					'processed',
-					analysisResult
-				);
+				// Create new transaction for final update
+				const finalTransaction = await sequelize.transaction();
 
-				console.log(`✅ Successfully processed recording: ${recordingId}`);
-				return analysisResult;
+				try {
+					// Update recording with results within transaction
+					await recording.update({
+						status: 'processed',
+						analysisResult: analysisResult,
+						processedAt: new Date()
+					}, { transaction: finalTransaction });
+
+					await finalTransaction.commit();
+					console.log(`✅ Successfully processed recording: ${recordingId}`);
+					return analysisResult;
+
+				} catch (updateError) {
+					await finalTransaction.rollback();
+					throw updateError;
+				}
+
 			} catch (error) {
+				// Rollback transaction if still active
+				if (!transaction.finished) {
+					await transaction.rollback();
+				}
+
 				console.error(`❌ Failed to process recording ${recordingId}:`, error);
 
-				// Update recording with error
-				await recordingService.updateRecordingStatus(
-					recordingId,
-					'failed',
-					null,
-					error.message
-				);
+				// Create separate transaction for error update
+				const errorTransaction = await sequelize.transaction();
+				try {
+					const recording = await Recording.findByPk(recordingId, { transaction: errorTransaction });
+					if (recording) {
+						await recording.update({
+							status: 'failed',
+							errorMessage: error.message
+						}, { transaction: errorTransaction });
+					}
+					await errorTransaction.commit();
+				} catch (errorUpdateError) {
+					await errorTransaction.rollback();
+					console.error(`❌ Failed to update error status for ${recordingId}:`, errorUpdateError);
+				}
 
 				throw error;
 			}
@@ -91,112 +129,128 @@ class AIProcessingService {
 	}
 
 	async performAIAnalysis(recording) {
-		// This is a mock AI analysis function
-		// In production, this would call your actual AI service
-
 		console.log(`🤖 Starting AI analysis for recording ${recording.id}`);
 		console.log(`📁 Audio file: ${recording.audioFileName}`);
 		console.log(`📊 Posture features available: ${!!recording.postureFeatures}`);
 
-		// Simulate processing time
-		await new Promise(resolve => setTimeout(resolve, 5000 + Math.random() * 10000));
+		try {
+			// Call the Python AI service
+			const analysisResult = await this.callAIService(recording);
+			console.log(`✅ AI analysis completed for recording ${recording.id}`);
+			return analysisResult;
+		} catch (error) {
+			console.error(`❌ AI analysis failed for recording ${recording.id}:`, error);
+			throw error;
+		}
+	}
 
-		// Mock analysis based on domain and posture features
-		const domain = recording.domain;
-		const postureFeatures = recording.postureFeatures || {};
+	async callAIService(recording) {
+		const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8003';
+		const maxRetries = 3;
+		const retryDelay = 5000; // 5 seconds
 
-		// Generate mock analysis result
-		const analysisResult = {
-			overall: {
-				score: Math.floor(70 + Math.random() * 25), // Random score between 70-95
-				grade: this.calculateGrade(Math.floor(70 + Math.random() * 25)),
-				summary: this.generateSummary(domain)
-			},
-			speechAnalysis: {
-				clarity: Math.floor(75 + Math.random() * 20),
-				pace: Math.floor(70 + Math.random() * 25),
-				volume: Math.floor(80 + Math.random() * 15),
-				fillerWords: Math.floor(Math.random() * 10),
-				pauseAnalysis: {
-					appropriatePauses: Math.floor(5 + Math.random() * 10),
-					inappropriatePauses: Math.floor(Math.random() * 5)
+		for (let attempt = 1; attempt <= maxRetries; attempt++) {
+			try {
+				console.log(`📡 Calling AI service (attempt ${attempt}/${maxRetries})...`);
+
+				// Prepare form data
+				const formData = new FormData();
+				formData.append('recording_id', recording.id);
+				formData.append('domain', recording.domain);
+				formData.append('posture_features', JSON.stringify(recording.postureFeatures || {}));
+				
+				// Read and append audio file
+				if (!recording.audioFilePath || !fs.existsSync(recording.audioFilePath)) {
+					throw new Error(`Audio file not found: ${recording.audioFilePath}`);
 				}
-			},
-			postureAnalysis: {
-				posture: Math.floor(70 + Math.random() * 25),
-				eyeContact: postureFeatures.eyeContact ?
-					Math.floor(postureFeatures.eyeContact.percentage * 0.8 + Math.random() * 20) :
-					Math.floor(60 + Math.random() * 30),
-				gestures: Math.floor(65 + Math.random() * 30),
-				confidence: Math.floor((postureFeatures.confidence || 0.7) * 100)
-			},
-			recommendations: this.generateRecommendations(domain),
-			timestamps: {
-				goodMoments: [
-					{ start: 15, end: 45, reason: "Excellent eye contact and clear articulation" },
-					{ start: 120, end: 180, reason: "Strong posture and confident gestures" }
-				],
-				improvementAreas: [
-					{ start: 60, end: 90, issue: "Speaking pace too fast" },
-					{ start: 200, end: 220, issue: "Fidgeting detected" }
-				]
+				
+				const audioStream = fs.createReadStream(recording.audioFilePath);
+				formData.append('audio_file', audioStream, {
+					filename: recording.audioFileName,
+					contentType: recording.mimeType || 'audio/wav'
+				});
+
+				// Make request to AI service
+				const response = await fetch(`${AI_SERVICE_URL}/analyze`, {
+					method: 'POST',
+					body: formData,
+					timeout: 30000, // 30 second timeout for initial request
+					headers: formData.getHeaders()
+				});
+
+				if (!response.ok) {
+					const errorText = await response.text();
+					throw new Error(`AI service returned ${response.status}: ${errorText}`);
+				}
+
+				const result = await response.json();
+				
+				if (!result.success) {
+					throw new Error(`AI service error: ${result.error}`);
+				}
+
+				// Poll for completion
+				const analysisResult = await this.pollForCompletion(recording.id, AI_SERVICE_URL);
+				return analysisResult;
+
+			} catch (error) {
+				console.error(`❌ AI service call failed (attempt ${attempt}):`, error.message);
+				
+				if (attempt === maxRetries) {
+					throw new Error(`AI service failed after ${maxRetries} attempts: ${error.message}`);
+				}
+
+				// Wait before retry
+				console.log(`⏳ Waiting ${retryDelay}ms before retry...`);
+				await new Promise(resolve => setTimeout(resolve, retryDelay));
 			}
-		};
-
-		console.log(`✅ AI analysis completed for recording ${recording.id}`);
-		return analysisResult;
+		}
 	}
 
-	calculateGrade(score) {
-		if (score >= 95) return 'A+';
-		if (score >= 90) return 'A';
-		if (score >= 85) return 'B+';
-		if (score >= 80) return 'B';
-		if (score >= 75) return 'C+';
-		if (score >= 70) return 'C';
-		if (score >= 65) return 'D+';
-		if (score >= 60) return 'D';
-		return 'F';
-	}
+	async pollForCompletion(recordingId, aiServiceUrl, maxPollTime = 600000) { // 10 minutes max
+		const pollInterval = 5000; // Poll every 5 seconds
+		const startTime = Date.now();
 
-	generateSummary(domain) {
-		const summaries = {
-			interview: "Good overall performance with room for improvement in confidence and eye contact.",
-			speech: "Strong delivery with clear articulation. Work on reducing filler words.",
-			presentation: "Professional presentation style. Consider varying your pace for better engagement.",
-			lecture: "Informative delivery with good structure. Enhance gestures for better student engagement.",
-			briefing: "Clear and concise communication. Maintain consistent eye contact with audience.",
-			conference_talk: "Engaging presentation with good technical content delivery.",
-			monologue: "Natural speaking style with good emotional expression."
-		};
+		console.log(`📊 Polling for completion of recording ${recordingId}...`);
 
-		return summaries[domain] || "Good overall performance with areas for improvement identified.";
-	}
+		while (Date.now() - startTime < maxPollTime) {
+			try {
+				const response = await fetch(`${aiServiceUrl}/status/${recordingId}`, {
+					timeout: 10000 // 10 second timeout for status checks
+				});
 
-	generateRecommendations(domain) {
-		const baseRecommendations = [
-			{
-				category: "Speech",
-				issue: "Pace variation needed",
-				suggestion: "Try to vary your speaking pace to maintain audience engagement",
-				priority: "medium"
-			},
-			{
-				category: "Posture",
-				issue: "Maintain eye contact",
-				suggestion: "Look directly at your audience more frequently to build connection",
-				priority: "high"
-			},
-			{
-				category: "Gestures",
-				issue: "Use purposeful hand movements",
-				suggestion: "Incorporate deliberate gestures to emphasize key points",
-				priority: "low"
+				if (!response.ok) {
+					throw new Error(`Status check failed: ${response.status}`);
+				}
+
+				const status = await response.json();
+				console.log(`📈 Progress: ${status.progress}% - ${status.message}`);
+
+				if (status.status === 'completed') {
+					// Clean up the job on the AI service
+					try {
+						await fetch(`${aiServiceUrl}/jobs/${recordingId}`, { method: 'DELETE' });
+					} catch (cleanupError) {
+						console.warn(`⚠️ Failed to cleanup job ${recordingId}:`, cleanupError.message);
+					}
+
+					return status.analysis;
+				} else if (status.status === 'failed') {
+					throw new Error(`AI analysis failed: ${status.error || 'Unknown error'}`);
+				}
+
+				// Wait before next poll
+				await new Promise(resolve => setTimeout(resolve, pollInterval));
+
+			} catch (error) {
+				console.error(`❌ Error polling status for ${recordingId}:`, error.message);
+				throw error;
 			}
-		];
+		}
 
-		return baseRecommendations;
+		throw new Error(`AI analysis timed out after ${maxPollTime}ms`);
 	}
+
 
 	async getJobStatus(jobId) {
 		try {
