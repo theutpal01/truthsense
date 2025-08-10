@@ -24,6 +24,8 @@
 	--theme-grad-two: #D4D4D4;
 	--thumb-grad-one: #C8E4E3;
 	--thumb-grad-two: #ECECEC;
+	--loading-grad-one: #21808d88;
+	--loading-grad-two: #21808D99;
 }
 
 .dark {
@@ -47,6 +49,8 @@
 	--theme-grad-two: #252525;
 	--thumb-grad-one: #363636;
 	--thumb-grad-two: #506A77;
+	--loading-grad-one: #48B0BE99;
+	--loading-grad-two: #48B0BEDD;
 }
 
 @theme inline {
@@ -91,6 +95,13 @@
 		border: 1px solid var(--border);
 	}
 
+	.bg-record-btn {
+		background: radial-gradient(circle at 50% 50%,
+				var(--background-card-one) 0%,
+				var(--background-card-two) 75%);
+		border: 1px solid var(--border);
+	}
+
 	.bg-success {
 		background: linear-gradient(180deg,
 				#A8E6CF11 0%,
@@ -110,13 +121,6 @@
 				#ffb2b211 0%,
 				#ff7a5222 100%);
 		border: 1px solid var(--error);
-	}
-
-
-	.bg-record-btn {
-		background: linear-gradient(45deg,
-				#C3C3C3FF 0%,
-				#EFEFEFFF 50%);
 	}
 
 	.bg-theme-btn {
@@ -143,8 +147,8 @@
 
 	.bg-bar {
 		background: linear-gradient(180deg,
-				#21808db3 0%,
-				#0F4147dd 100%);
+				var(--loading-grad-one) 0%,
+				var(--loading-grad-two) 100%);
 	}
 
 	.bg-bar-disabled {

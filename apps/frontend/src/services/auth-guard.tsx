@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAPI';
-import { Spinner } from '@heroui/react';
+import { AnimatedWave } from '@/components/animated-wave';
 
 interface Props {
 	children: React.ReactNode;
@@ -26,7 +26,7 @@ export const AuthGuard = ({ children }: Props) => {
 	if (isLoading || !checked) {
 		return (
 			<div className="h-screen flex flex-col gap-4 items-center justify-center">
-				<Spinner color='primary' size='lg' variant='wave' />
+				<AnimatedWave colorClass='text-text' isPlaying={isLoading || !checked} speed='fast' />
 				<p className='text-text'>Checking auth info</p>
 			</div>
 		);

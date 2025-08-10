@@ -1,10 +1,11 @@
 "use client";
-import { Button, Select, SelectItem, Spinner } from '@heroui/react';
+import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Select, SelectItem, Spinner } from '@heroui/react';
 import React, { useRef, useEffect, useState } from 'react';
 import { AnimatedWave } from './animated-wave';
 import { IoMdInformationCircleOutline } from "react-icons/io";
 import { PiStopFill } from 'react-icons/pi';
 import Webcam from 'react-webcam';
+import { CountdownCircleTimer } from 'react-countdown-circle-timer';
 import { exportWavFromRecording } from '@/utils/audio';
 import { usePostureAnalyzer } from '@/hooks/usePostureAnalyzer';
 import { FeedbackCounts, initialFeedbackCounts } from '@/types/feedback.types';
@@ -34,6 +35,7 @@ const RecordingPage = () => {
 		domain: undefined,
 		sound: null,
 	});
+	const [showWarning, setShowWarning] = useState(false);
 	const [selectKey, setSelectKey] = useState(Date.now());
 	const { init, analyze } = usePostureAnalyzer();
 
@@ -56,6 +58,12 @@ const RecordingPage = () => {
 	const [isUploading, setIsUploading] = useState(false);
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [isDone, setIsDone] = useState(false);
+	const [showTimer, setShowTimer] = useState(false);
+
+	const prepareRecording = async () => {
+		setShowWarning(false);
+		setShowTimer(true);
+	}
 
 
 	const startRecording = async () => {
@@ -159,7 +167,7 @@ const RecordingPage = () => {
 						setIsDone(true);
 						setIsProcessing(false);
 
-						
+
 						// Wait for backend to process
 						await delay(3000); // give Redis worker time to finish
 
@@ -294,7 +302,7 @@ const RecordingPage = () => {
 				<div className="flex flex-col justify-between w-full md:w-[250px] gap-4">
 					{/* Question Bubble */}
 					<div className="">
-						<Select key={selectKey} aria-label='Select domain' disabled={isRecording} value={data.domain} variant='faded' placeholder="Select a domain" className="w-full *:text-highlight" onSelectionChange={(e) => setData({ ...data, domain: e.currentKey })}>
+						<Select key={selectKey} aria-label='Select domain' isDisabled={isRecording} disabled={isRecording} value={data.domain} variant='faded' placeholder="Select a domain" className="w-full *:text-highlight" onSelectionChange={(e) => setData({ ...data, domain: e.currentKey })}>
 							{domains.map((type) => (
 								<SelectItem className='text-highlight' textValue={type.label} key={type.id}>{type.label}</SelectItem>
 							))}
@@ -305,9 +313,9 @@ const RecordingPage = () => {
 					<div className="flex flex-col items-center gap-5">
 						<RecordingTimerCircle visible={isRecording} duration={MAX_DURATION} elapsed={elapsedTime}>
 							<button
-								onClick={isRecording ? stopRecording : startRecording}
+								onClick={isRecording ? stopRecording : () => setShowWarning(true)}
 								disabled={!data.domain || isRecording == null}
-								className={`w-[150px] h-[150px] rounded-full bg-card shadow-lg flex items-center justify-center ${data.domain != undefined ? 'cursor-pointer' : ''} transition-transform`}
+								className={`w-[150px] h-[150px] rounded-full bg-record-btn shadow-lg flex items-center justify-center ${data.domain != undefined ? 'cursor-pointer' : ''} transition-transform`}
 							>
 								<AnimatedWave isPlaying={isRecording} disabled={!data.domain} />
 							</button>
@@ -373,6 +381,41 @@ const RecordingPage = () => {
 					<p className='text-text'>Showing you the report</p>
 				</div>
 			)}
+
+			<Modal isOpen={showWarning} onClose={prepareRecording} className='bg-card'>
+				<ModalContent>
+					{(onClose) => (
+						<>
+							<ModalHeader className="flex flex-col gap-1 text-warning">Important Warning</ModalHeader>
+							<ModalBody>
+								<p className='text-text'>
+									Please make sure to look directly at the camera while recording. This will help us analyze your posture and provide accurate feedback. The recording will start after you close this warning.
+								</p>
+							</ModalBody>
+							<ModalFooter>
+								<Button className='!bg-error' onPress={onClose}>
+									Close
+								</Button>
+							</ModalFooter>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
+
+			{showTimer && <div className='absolute z-40 top-0 bottom-0 left-0 right-0 flex justify-center items-center bg-background/25 backdrop-blur text-primary !text-5xl'>
+				<CountdownCircleTimer
+					isPlaying={showTimer}
+					duration={3}
+					onComplete={() => {
+						startRecording();
+						setShowTimer(false);
+					}}
+					colors={"#21808D"}
+
+				>
+					{({ remainingTime }) => remainingTime}
+				</CountdownCircleTimer>
+			</div >}
 		</>
 	);
 };

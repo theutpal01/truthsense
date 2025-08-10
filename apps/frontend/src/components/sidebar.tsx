@@ -53,7 +53,7 @@ const Sidebar = () => {
 	];
 
 	const utilItems = [
-		{ onClick: () => { }, icon: <TbSettings className="size-5" /> },
+		// { onClick: () => { }, icon: <TbSettings className="size-5" /> },
 		{ onClick: handleLogout, icon: <TbLogout className="size-5" /> }
 	];
 
@@ -106,7 +106,7 @@ const Sidebar = () => {
 
 				{/* Bottom Action */}
 				{isAuthenticated && (
-					<div className="mt-auto flex flex-col flex-1/4 items-center ">
+					<div className="mt-auto flex flex-col flex-1/4 items-center justify-end">
 						{utilItems.map((item, index) => (
 							<button
 								key={index}

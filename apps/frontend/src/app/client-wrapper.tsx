@@ -40,7 +40,7 @@ export default function ClientLayoutWrapper({ children }: { children: ReactNode 
 	return (
 		<div className="flex h-screen">
 			{!hideSidebar && <Sidebar />}
-			<div className="flex-1 overflow-auto">{children}</div>
+			<div className="flex-1 relative overflow-auto">{children}</div>
 		</div>
 	);
 }
