@@ -1,9 +1,10 @@
 WEIGHTS = {
     "clarity_score": 15,
     "confidence_score": 15,
-    "fluency_score": 20,
-    "structure_score": 25,
-    "grammar_score": 25
+    "fluency_score": 15,
+    "structure_score": 20,
+    "grammar_score": 20,
+    "posture_score": 15,
 }
 
 def calculate_overall_score(result):
@@ -15,7 +16,7 @@ def calculate_overall_score(result):
         "confidence_score": result["speech_evaluator"]["confidence_score"]
     }
     
-    weighted_sum = sum(mapping[k] * WEIGHTS[k] for k in WEIGHTS)
+    weighted_sum = sum(mapping[k] * WEIGHTS[k] for k in WEIGHTS if k in mapping.keys())
     total_weight = sum(WEIGHTS.values())
     return int(weighted_sum / total_weight)
         

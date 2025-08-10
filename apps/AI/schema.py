@@ -1,7 +1,8 @@
 from typing import List, Dict
 from pydantic import Field, BaseModel
 
-class PostureFeatures(BaseModel):   # The schema that will be received from the frontend, with the posture analysis
+# The schema that will be received from the frontend, with the posture analysis
+class PostureFeatures(BaseModel):   
     eyeContact: Dict[str, float]
     shoulderAlignment: Dict[str, float]
     handGestures: Dict[str, float]
@@ -32,12 +33,14 @@ class AudioOnlyFeedback(BaseModel):
     language_evaluator: ContentEvaluator
     speech_evaluator: SpeechEvaluator
 
-class Feedback(BaseModel):
+# The schema that the feedback generation model will send back
+class Feedback(BaseModel):      
     fluency_evaluator: FluencyEvaluator
     language_evaluator: ContentEvaluator
     speech_evaluator: SpeechEvaluator
     posture_evaluator: PostureEvaluator
     
+# The response to be sent to the frontend
 class FrontendResponse(BaseModel):
     transcript: str
     overall_score: int
@@ -45,4 +48,4 @@ class FrontendResponse(BaseModel):
     fluency_evaluator: FluencyEvaluator
     language_evaluator: ContentEvaluator
     speech_evaluator: SpeechEvaluator
-    posture_evaluator: PostureEvaluator  # Placeholder for now, schema not decided yet
+    posture_evaluator: PostureEvaluator

@@ -33,7 +33,7 @@ def get_prompt(audio_features, posture_features: dict | PostureFeatures, respons
 You are a professional voice coach and delivery analyst tasked with evaluating the user's performance based on a variety of acoustic and prosodic features. Below is a detailed snapshot of the speaker’s delivery — both baseline and full-clip — along with their changes. Use this to deliver personalized, context-aware feedback.
 
 ## NOTE:
-- The **first {int(audio_features['baseline_duration'])} seconds** of the speech are used to define the speaker's personal baseline.
+- The **first {audio_features['baseline_duration']} seconds** of the speech are used to define the speaker's personal baseline.
 - All relative metrics (e.g., deltas, ratios) are calculated with respect to this baseline.
 - Interpret *changes* from baseline as signs of adaptation or stress — not necessarily flaws.
 - **Avoid quoting any raw values** in your response. Use intuitive, narrative insights only.
@@ -47,7 +47,7 @@ You are a professional voice coach and delivery analyst tasked with evaluating t
 </transcript>
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📏 BASELINE METRICS (First {int(audio_features['baseline_duration'])} seconds)
+📏 BASELINE METRICS (First {audio_features['baseline_duration']} seconds)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## Fluency & Tempo

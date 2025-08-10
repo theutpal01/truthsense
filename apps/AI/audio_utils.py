@@ -11,9 +11,6 @@ from pydub import AudioSegment
 from nltk.corpus import cmudict
 from parselmouth.praat import call
 from groq.types.audio import Transcription
-import logging
-import time
-from typing import List, Tuple, Optional
 
 # First download the CMU dictionary if not already installed
 try:
@@ -25,12 +22,12 @@ except:
 
 
 # Async Transcription by splitting large files into chunks without saving the chunks to memory
-def split_audio_in_memory(audio_path, max_mb=24):
-    if isinstance(audio_path, io.BytesIO):
-        audio_path.seek(0)
-        audio = AudioSegment.from_file(audio_path, format='wav')
+def split_audio_in_memory(audio_data, max_mb=24):
+    if isinstance(audio_data, io.BytesIO):
+        audio_data.seek(0)
+        audio = AudioSegment.from_file(audio_data, format='wav')
     else:
-        audio = AudioSegment.from_wav(audio_path)
+        audio = AudioSegment.from_wav(audio_data)
     
     bytes_per_ms = (audio.frame_rate * audio.frame_width * audio.channels) / 1000
     max_bytes = max_mb * 1024 * 1024
@@ -47,127 +44,47 @@ def split_audio_in_memory(audio_path, max_mb=24):
     return chunks
 
 
-async def transcribe_chunk(filename, audio_buffer, client: AsyncClient, max_retries: int = 3, timeout: float = 120.0):
-    """Transcribe a chunk of an audio file with timeout and retry logic
+async def transcribe_chunk(filename, audio_buffer, client: AsyncClient):
+    """Transcribe a chunk of an audio file
 
     Args:
-        filename (str): Name of the audio chunk
-        audio_buffer (io.BytesIO): Audio data buffer
-        client (AsyncClient): Groq client for transcription
-        max_retries (int): Maximum number of retry attempts
-        timeout (float): Timeout in seconds for each attempt
+        filename (str): Name of the chunk, associated to the audio buffer
+        audio_buffer (io.BytesIO): An in-memory buffer of the audio of the current chunk
+        client (AsyncClient): Groq asynchronous client, to handle transcription
 
     Returns:
-        Transcription: Transcription result from Groq API
+        CoroutineType: A Coroutine call to generate the transcript of the chunk 
     """
-    for attempt in range(max_retries):
-        try:
-            # Reset buffer position for each attempt
-            audio_buffer.seek(0)
-            
-            # Apply timeout to the transcription request
-            return await asyncio.wait_for(
-                client.audio.transcriptions.create(
-                    file=(filename, audio_buffer.read()),
-                    model="whisper-large-v3",
-                    response_format="verbose_json",
-                    timestamp_granularities=["word"]
-                ),
-                timeout=timeout
-            )
-        except asyncio.TimeoutError:
-            logging.warning(f"Timeout transcribing {filename} (attempt {attempt + 1}/{max_retries})")
-            if attempt == max_retries - 1:
-                raise asyncio.TimeoutError(f"Failed to transcribe {filename} after {max_retries} attempts due to timeout")
-            
-            # Exponential backoff: wait 2^attempt seconds
-            await asyncio.sleep(2 ** attempt)
-            
-        except Exception as e:
-            logging.error(f"Error transcribing {filename} (attempt {attempt + 1}/{max_retries}): {str(e)}")
-            if attempt == max_retries - 1:
-                raise e
-            
-            # Wait before retry
-            await asyncio.sleep(1 + attempt)
+    return await client.audio.transcriptions.create(
+        file=(filename, audio_buffer),
+        model="whisper-large-v3-turbo",
+        response_format="verbose_json",
+        timestamp_granularities=["word"]
+    )
 
 
-async def transcribe_audio(audio_path, client: AsyncClient, progress_callback=None):
-    """Transcribe an audio file without saving the chunks to disk with improved error handling
+async def transcribe_audio(audio, client: AsyncClient):
+    """Transcribe an audio file without saving the chunks to disk
 
     Args:
-        audio_path (str): The path of the audio
+        audio (str | io.BytesIO): The audio data. Can either be a path, or a BytesIO buffer.
         client (AsyncClient): The Groq client that supports async transcription of multiple files
-        progress_callback (callable, optional): Callback function to report progress
 
     Returns:
         Transcription: A groq.types.audio.Transcription that contains the transcript, duration and the words along with their timestamps
     """
-    chunks = split_audio_in_memory(audio_path)
-    total_chunks = len(chunks)
-    logging.info(f"Transcribing audio with {total_chunks} chunks")
-    
-    if progress_callback:
-        progress_callback(0, total_chunks, "Starting transcription...")
-    
-    # Process chunks with controlled concurrency to avoid overwhelming the API
-    max_concurrent = min(3, total_chunks)  # Limit concurrent requests
-    completed_transcripts = []
-    failed_chunks = []
-    
-    # Create semaphore to limit concurrent requests
-    semaphore = asyncio.Semaphore(max_concurrent)
-    
-    async def transcribe_with_semaphore(name, buffer, chunk_index):
-        async with semaphore:
-            try:
-                result = await transcribe_chunk(name, buffer, client)
-                if progress_callback:
-                    progress_callback(chunk_index + 1, total_chunks, f"Completed chunk {chunk_index + 1}/{total_chunks}")
-                return result
-            except Exception as e:
-                logging.error(f"Failed to transcribe chunk {name}: {str(e)}")
-                failed_chunks.append((chunk_index, name, str(e)))
-                return None
-    
-    # Create tasks for all chunks
-    tasks = [
-        transcribe_with_semaphore(name, buffer, i)
-        for i, (name, buffer) in enumerate(chunks)
-    ]
-    
-    # Execute all tasks
-    all_results = await asyncio.gather(*tasks, return_exceptions=True)
-    
-    # Filter out failed transcriptions
-    successful_transcripts = [
-        result for result in all_results 
-        if result is not None and not isinstance(result, Exception)
-    ]
-    
-    if not successful_transcripts:
-        raise RuntimeError(f"All transcription chunks failed. Failed chunks: {failed_chunks}")
-    
-    if failed_chunks:
-        logging.warning(f"Some chunks failed to transcribe: {failed_chunks}")
-    
-    # Combine successful results
+    chunks = split_audio_in_memory(audio)
+    tasks = [transcribe_chunk(name, buffer, client) for name, buffer in chunks]
+    all_transcripts = await asyncio.gather(*tasks)
+
     full_transcript = ""
     all_words = []
     total_duration = 0.0
 
-    for chunk in successful_transcripts:
-        full_transcript += chunk.text + " " if chunk.text else ""
+    for chunk in all_transcripts:
+        full_transcript += chunk.text
         all_words.extend(getattr(chunk, "words", []))
-        total_duration += chunk.duration or 0.0
-    
-    # Clean up transcript
-    full_transcript = full_transcript.strip()
-    
-    if progress_callback:
-        progress_callback(total_chunks, total_chunks, "Transcription completed")
-    
-    logging.info(f"Transcription completed: {len(successful_transcripts)}/{total_chunks} chunks successful")
+        total_duration += chunk.duration          # type: ignore
     
     return Transcription(text=full_transcript, words=all_words, duration=total_duration)   # type: ignore
 
@@ -208,6 +125,7 @@ def extract_parselmouth_features(data, sr):
 
 async def async_extract_parselmouth_features(data, sr, executor):
     """
+    !! Warning: Usability untested
     A function to asynchronously extract features using Parselmouth
     """
     return await asyncio.get_event_loop().run_in_executor(
@@ -250,6 +168,7 @@ def extract_librosa_features(data, sr):
 
 async def async_extract_librosa_features(data, sr, executor):
     """
+    !! Warning: Usability untested
     A function to asynchronously extract features using Parselmouth
     """
     return await asyncio.get_event_loop().run_in_executor(
@@ -300,7 +219,7 @@ def extract_features_from_wave(data, sr):
     
 async def async_extract_features_from_wave(data, sr, executor):
     """
-    !! Warning: Viability unsure
+    !! Warning: Usability untested
     An asynchronous function to extract the features of a wave using librosa and parselmouth
     """
     # Start both tasks concurrently
@@ -314,43 +233,43 @@ async def async_extract_features_from_wave(data, sr, executor):
 
 
 # Full function to extract all the features of the audio file
-async def extract_features(audio_path, fluency_model, client: AsyncClient, progress_callback=None):
+async def extract_features(audio_data, fluency_model, client: AsyncClient):
     """A function to extract all the features from an audio file in order to generate feedback on it
 
     Args:
-        audio_path (str): Path to audio file
+        audio_data (str | io.BytesIO): Path to audio file, or a BytesIO object that contains audio
         fluency_model (Any, optional): The model to load to get a rough fluency rating
-        client (AsyncClient): 
-        progress_callback (callable, optional): Callback function to report progress
+        client (AsyncClient): Groq asychronous client to handle transcription
 
     Returns:
         dict: A dictionary containing all the features extracted, of baseline, full file and the ratios
     """
     
     # -------------- Load the audio file --------------
-    if isinstance(audio_path, io.BytesIO):
-        data, sr = sf.read(audio_path)
+    if isinstance(audio_data, io.BytesIO):
+        data, sr = sf.read(audio_data)
     else:
-        data, sr = sf.read(audio_path)
+        data, sr = sf.read(audio_data)
     
-    assert len(data) != 0, "Your audio file appears to contain no content. Please input a valid file"
+    assert len(data) > 160, "Your audio file appears to contain no content. Please input a valid file"
     
-    
-    # -------------- Get transcription and check minimum duration --------------
-    transcription_json = await transcribe_audio(audio_path, client, progress_callback)
-    duration_sec = transcription_json.duration    # type: ignore
-    baseline_duration = max(10.0, duration_sec * 0.05)      # Minimum duration for baseline is 10 seconds
+    # Convert to mono channel and resample
+    if data.ndim > 1:
+        data = data.mean(axis=1)
+    data = librosa.resample(data, orig_sr=sr, target_sr=16000)
 
-    assert duration_sec != 0, "File duration appears to be 0 after transcription?"
-    
-    
+    duration_in_secs = len(data) / 16000
+    baseline_duration = max(10.0, duration_in_secs * 0.05)      # Minimum duration for baseline is 10 seconds
+
+    # Start the transcription job
+    transcription_task = asyncio.create_task(transcribe_audio(audio_data, client))
+
     # -------------- Get features of baseline and full wave --------------
-    baseline_data = data[:min(len(data), int(sr * baseline_duration))]
+    baseline_data = data[:min(len(data), int(16000 * baseline_duration))]
     baseline_feats = extract_features_from_wave(baseline_data, sr)
     full_feats = extract_features_from_wave(data, sr)
 
-
-    # -------------- Get fluency ratings --------------
+    # Get fluency ratings
     features = ['zcr', 'pitch_mean', 'pitch_std', 'rms_mean', 'rms_std', 'rms_var', 'mfcc_mean', 'delta_mean']
     rating_map = ['Low', 'Medium', 'High']
         
@@ -361,17 +280,17 @@ async def extract_features(audio_path, fluency_model, client: AsyncClient, progr
     baseline_fluency = rating_map[res[0].argmax()]
     full_fluency = rating_map[res[1].argmax()]
 
+    # Get Relative features
     relative_feats = {}
     for key in full_feats:
         if key not in ['mfcc', 'delta_mfcc']:
             base = baseline_feats.get(key, 0.0)
             full = full_feats[key]
             relative_feats[f'{key}_delta'] = full - base
-    
-    
-    # -------------- Get speaking rates --------------
-    # Assuming the transcript has come by now
 
+    # -------------- Get transcription and speaking rates --------------
+    transcription_json = await transcription_task
+    
     # Baseline speaking rate
     baseline_transcript = [word_segment['word'] for word_segment in transcription_json.words if word_segment['start'] <= baseline_duration]  # type: ignore
     baseline_word_count = len(baseline_transcript)
@@ -382,10 +301,9 @@ async def extract_features(audio_path, fluency_model, client: AsyncClient, progr
     # Full data speaking rate
     transcript = transcription_json.text
     word_count = len(transcript.split())
-    speaking_rate = word_count / duration_sec
-    syllables_rate = estimate_syllable_rate(transcript, duration_sec)
+    speaking_rate = word_count / duration_in_secs
+    syllables_rate = estimate_syllable_rate(transcript, duration_in_secs)
         
-    
     # -------------- Pause detection --------------
     intervals = librosa.effects.split(data, top_db=30)
     pauses = [(intervals[i][0] - intervals[i - 1][1]) / sr
@@ -395,10 +313,11 @@ async def extract_features(audio_path, fluency_model, client: AsyncClient, progr
     long_pause_count = len(pauses)
     long_pause_total = sum(pauses)
 
+    # -------------- Return full feedback for prompt generation --------------
     return {
         "transcript": transcript,
-        "duration": duration_sec,
-        "baseline_duration": baseline_duration,
+        "duration": duration_in_secs,
+        "baseline_duration": int(baseline_duration),
         "speaking_rate": speaking_rate,
         "syllables_rate": syllables_rate,
         "baseline_speaking_rate": baseline_speaking_rate,
