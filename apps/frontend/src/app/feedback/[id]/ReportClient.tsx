@@ -60,7 +60,7 @@ const Report = ({ id }: { id: string }) => {
 		);
 	}
 
-	const { overall, speechAnalysis, postureAnalysis, recommendations, timestamps } = data;
+	const { info, overall, speechAnalysis, postureAnalysis, recommendations, timestamps } = data;
 
 	const totalPauses =
 		speechAnalysis.pauseAnalysis.appropriatePauses +
@@ -68,13 +68,13 @@ const Report = ({ id }: { id: string }) => {
 
 	return (
 		<AuthGuard>
-			<div className="relative container font-lato mx-auto px-8 py-10">
+			<div className="relative font-lato mx-auto px-8 py-10">
 				<div ref={reportRef} className="flex flex-col gap-10">
 
 					<Card className="flex flex-row items-center justify-between bg-card w-full p-5">
 						<div className="flex flex-col">
-							<h2 className="text-2xl font-bold mb-1 text-primary">Feedback Report</h2>
-							<p>Fetched on: {new Date().toLocaleDateString()}</p>
+							<h2 className="text-2xl font-bold mb-1 text-primary"><span className="font-medium">Category: </span>{info.category}</h2>
+							<p>Report generated on: {new Date(info.reportCreated).toDateString()}</p>
 						</div>
 						<Button
 							onClick={handleDownloadPDF}

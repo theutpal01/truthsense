@@ -1,4 +1,5 @@
 "use client";
+import Loading from '@/components/ui/loading';
 import { useRecording } from '@/hooks/useAPI'
 import { AuthGuard } from '@/services/auth-guard';
 import { Button } from '@heroui/react';
@@ -11,7 +12,7 @@ const HistoryPage = () => {
 	const router = useRouter();
 	const [loading, setLoading] = React.useState("");
 	const [delLoading, setDelLoading] = React.useState("");
-	const { fetchRecordings, recordings, deleteRecording } = useRecording();
+	const { fetchRecordings, isLoading, recordings, deleteRecording } = useRecording();
 
 	// Fetch recordings when component mounts (will only run if authenticated due to AuthGuard)
 	useEffect(() => {
@@ -44,8 +45,8 @@ const HistoryPage = () => {
 
 	return (
 		<AuthGuard>
-			<div className='container w-full h-screen overflow-hidden'>
-				<h2 className='text-2xl font-bold px-16 py-8 text-primary'>History</h2>
+			<div className='w-full h-screen overflow-hidden'>
+				<h2 className='text-3xl font-bold px-16 py-8 text-primary'>History</h2>
 				<div className='flex flex-col max-w-full py-8 px-16 overflow-y-auto w-full h-[90vh]'>
 					{recordings.length > 0 ? (
 						recordings.map((recording) => (
@@ -82,6 +83,7 @@ const HistoryPage = () => {
 					)}
 				</div>
 			</div>
+			{isLoading && <Loading loading={isLoading} />}
 		</AuthGuard>
 	)
 }

@@ -24,7 +24,7 @@ const Register = () => {
 
 	return (
 		<div className='bg-register flex flex-col items-center justify-center h-screen'>
-			<div className='p-12 bg-white/20 border border-white/30 shadow-2xl backdrop-blur-xs rounded-2xl'>
+			<div className='p-12 bg-background/20 border border-border/30 shadow-2xl backdrop-blur-xs rounded-2xl'>
 				<Card className='z-10 max-w-[28em] p-8 bg-background-card-two/90 shadow-none backdrop-blur-2xl' >
 					<CardHeader className='flex flex-col gap-4 items-baseline'>
 						<h2 className='text-highlight font-lato text-2xl font-medium'>
@@ -90,7 +90,7 @@ const Register = () => {
 					</CardBody>
 
 					<CardFooter className='flex flex-col gap-4'>
-						<p className='text-muted font-inter text-xs text-center'>
+						<p className='text-text font-inter text-xs text-center'>
 							Already have an account? <Link href='/auth/login' className='text-primary font-semibold text-xs'>Log in</Link>
 						</p>
 					</CardFooter>
