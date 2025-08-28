@@ -142,7 +142,7 @@ const RecordingPage = () => {
 				setIsProcessing(true);
 
 				// Create a blob from the recorded chunks directly
-				const audioBlob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+				const audioBlob = new Blob(recordedChunksRef.current, { type: 'audio/webm' });
 
 				try {
 					setIsProcessing(false);
@@ -152,7 +152,7 @@ const RecordingPage = () => {
 					console.log("Uploading with posture data:", transformedPostureData);
 
 					// Create a file from the blob
-					const audioFile = new File([audioBlob], 'recording.webm', { type: 'video/webm' });
+					const audioFile = new File([audioBlob], 'recording.wav', { type: 'audio/wav' });
 
 					// Upload to backend
 					await uploadAudio(
