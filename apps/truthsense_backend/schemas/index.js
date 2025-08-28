@@ -1,33 +1,7 @@
 const Joi = require('joi');
 
 // Schema for posture features coming from frontend
-const PostureFeatures = Joi.object({
-  headPosition: Joi.object({
-    x: Joi.number().required(),
-    y: Joi.number().required(),
-    z: Joi.number().required()
-  }).required(),
-  shoulderAlignment: Joi.object({
-    leftShoulder: Joi.object({
-      x: Joi.number().required(),
-      y: Joi.number().required()
-    }).required(),
-    rightShoulder: Joi.object({
-      x: Joi.number().required(),
-      y: Joi.number().required()
-    }).required()
-  }).required(),
-  spineAlignment: Joi.number().required(),
-  eyeContact: Joi.object({
-    percentage: Joi.number().min(0).max(100).required(),
-    avgDuration: Joi.number().required()
-  }).required(),
-  gestures: Joi.object({
-    handMovements: Joi.number().required(),
-    facialExpressions: Joi.number().required()
-  }).required(),
-  confidence: Joi.number().min(0).max(1).required()
-});
+const PostureFeatures = Joi.object().unknown(true);
 
 // Schema for response to frontend
 const FrontendResponse = Joi.object({

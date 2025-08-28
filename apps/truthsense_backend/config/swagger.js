@@ -58,157 +58,159 @@ const options = {
         },
         PostureFeatures: {
           type: 'object',
-          required: ['headPosition', 'shoulderAlignment', 'spineAlignment', 'eyeContact', 'gestures', 'confidence'],
+          required: ['eyeContact', 'shoulderAlignment', 'handGestures', 'headBodyAlignment'],
           properties: {
-            headPosition: {
+            eyeContact: {
               type: 'object',
-              required: ['x', 'y', 'z'],
-              properties: {
-                x: { type: 'number' },
-                y: { type: 'number' },
-                z: { type: 'number' }
+              additionalProperties: {
+                type: 'number'
               }
             },
             shoulderAlignment: {
               type: 'object',
-              required: ['leftShoulder', 'rightShoulder'],
-              properties: {
-                leftShoulder: {
-                  type: 'object',
-                  required: ['x', 'y'],
-                  properties: {
-                    x: { type: 'number' },
-                    y: { type: 'number' }
-                  }
-                },
-                rightShoulder: {
-                  type: 'object',
-                  required: ['x', 'y'],
-                  properties: {
-                    x: { type: 'number' },
-                    y: { type: 'number' }
-                  }
-                }
+              additionalProperties: {
+                type: 'number'
               }
             },
-            spineAlignment: {
-              type: 'number'
-            },
-            eyeContact: {
+            handGestures: {
               type: 'object',
-              required: ['percentage', 'avgDuration'],
-              properties: {
-                percentage: {
-                  type: 'number',
-                  minimum: 0,
-                  maximum: 100
-                },
-                avgDuration: {
-                  type: 'number'
-                }
+              additionalProperties: {
+                type: 'number'
               }
             },
-            gestures: {
+            headBodyAlignment: {
               type: 'object',
-              required: ['handMovements', 'facialExpressions'],
-              properties: {
-                handMovements: { type: 'number' },
-                facialExpressions: { type: 'number' }
+              additionalProperties: {
+                type: 'number'
               }
+            }
+          }
+        },
+        FluencyEvaluator: {
+          type: 'object',
+          required: ['comment', 'score'],
+          properties: {
+            comment: {
+              type: 'string',
+              description: '3-5 sentence feedback on fluency, including pace, fillers, pauses, flow.'
             },
-            confidence: {
-              type: 'number',
+            score: {
+              type: 'integer',
+              description: 'Fluency score (0-100).',
               minimum: 0,
-              maximum: 1
+              maximum: 100
+            }
+          }
+        },
+        ContentEvaluator: {
+          type: 'object',
+          required: ['strengths', 'improvements', 'structure_score', 'grammar_score'],
+          properties: {
+            strengths: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Strengths in content, structure, language, and grammar.',
+              minItems: 2,
+              maxItems: 5
+            },
+            improvements: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Suggestions for improvement in content, structure, language, grammar.',
+              minItems: 2,
+              maxItems: 5
+            },
+            structure_score: {
+              type: 'integer',
+              description: 'Score (0-100) for logical organization and transitions.',
+              minimum: 0,
+              maximum: 100
+            },
+            grammar_score: {
+              type: 'integer',
+              description: 'Score (0-100) for correctness of language use.',
+              minimum: 0,
+              maximum: 100
+            }
+          }
+        },
+        SpeechEvaluator: {
+          type: 'object',
+          required: ['strengths', 'improvements', 'clarity_score', 'confidence_score'],
+          properties: {
+            strengths: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Strengths in clarity, delivery, and perceived confidence.',
+              minItems: 2,
+              maxItems: 5
+            },
+            improvements: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Suggestions for improvement in clarity, delivery, perceived confidence.',
+              minItems: 2,
+              maxItems: 5
+            },
+            clarity_score: {
+              type: 'integer',
+              description: 'Score (0-100) for clarity of speech.',
+              minimum: 0,
+              maximum: 100
+            },
+            confidence_score: {
+              type: 'integer',
+              description: 'Score (0-100) for perceived speaker confidence.',
+              minimum: 0,
+              maximum: 100
+            }
+          }
+        },
+        PostureEvaluator: {
+          type: 'object',
+          required: ['tips', 'posture_score'],
+          properties: {
+            tips: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Pointers for improving posture while speaking',
+              minItems: 3,
+              maxItems: 7
+            },
+            posture_score: {
+              type: 'integer',
+              description: 'Score (0-100) for proper posture maintanence while speaking',
+              minimum: 0,
+              maximum: 100
             }
           }
         },
         AnalysisResult: {
           type: 'object',
+          required: [
+            'transcript',
+            'overall_score',
+            'speaking_rate',
+            'fluency_evaluator',
+            'language_evaluator',
+            'speech_evaluator',
+            'posture_evaluator'
+          ],
           properties: {
-            overall: {
-              type: 'object',
-              properties: {
-                score: {
-                  type: 'number',
-                  minimum: 0,
-                  maximum: 100
-                },
-                grade: {
-                  type: 'string',
-                  enum: ['A+', 'A', 'B+', 'B', 'C+', 'C', 'D+', 'D', 'F']
-                },
-                summary: {
-                  type: 'string'
-                }
-              }
+            transcript: { type: 'string' },
+            overall_score: { type: 'integer' },
+            speaking_rate: { type: 'integer' },
+            fluency_evaluator: {
+              $ref: '#/components/schemas/FluencyEvaluator'
             },
-            speechAnalysis: {
-              type: 'object',
-              properties: {
-                clarity: { type: 'number', minimum: 0, maximum: 100 },
-                pace: { type: 'number', minimum: 0, maximum: 100 },
-                volume: { type: 'number', minimum: 0, maximum: 100 },
-                fillerWords: { type: 'number' },
-                pauseAnalysis: {
-                  type: 'object',
-                  properties: {
-                    appropriatePauses: { type: 'number' },
-                    inappropriatePauses: { type: 'number' }
-                  }
-                }
-              }
+            language_evaluator: {
+              $ref: '#/components/schemas/ContentEvaluator'
             },
-            postureAnalysis: {
-              type: 'object',
-              properties: {
-                posture: { type: 'number', minimum: 0, maximum: 100 },
-                eyeContact: { type: 'number', minimum: 0, maximum: 100 },
-                gestures: { type: 'number', minimum: 0, maximum: 100 },
-                confidence: { type: 'number', minimum: 0, maximum: 100 }
-              }
+            speech_evaluator: {
+              $ref: '#/components/schemas/SpeechEvaluator'
             },
-            recommendations: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  category: { type: 'string' },
-                  issue: { type: 'string' },
-                  suggestion: { type: 'string' },
-                  priority: { 
-                    type: 'string',
-                    enum: ['high', 'medium', 'low']
-                  }
-                }
-              }
-            },
-            timestamps: {
-              type: 'object',
-              properties: {
-                goodMoments: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      start: { type: 'number' },
-                      end: { type: 'number' },
-                      reason: { type: 'string' }
-                    }
-                  }
-                },
-                improvementAreas: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      start: { type: 'number' },
-                      end: { type: 'number' },
-                      issue: { type: 'string' }
-                    }
-                  }
-                }
-              }
+            posture_evaluator: {
+              $ref: '#/components/schemas/PostureEvaluator'
             }
           }
         }

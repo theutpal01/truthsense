@@ -145,7 +145,7 @@ class AIProcessingService {
 	}
 
 	async callAIService(recording) {
-		const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8003';
+		const AI_SERVICE_URL = process.env.AI_SERVICE_URL;
 		const maxRetries = 3;
 		const retryDelay = 5000; // 5 seconds
 

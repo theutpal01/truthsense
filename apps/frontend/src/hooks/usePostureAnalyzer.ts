@@ -57,10 +57,15 @@ export const usePostureAnalyzer = () => {
 			return { pose: null, face: null, hand: null };
 		}
 
-		const pose = poseLandmarkerRef.current.detectForVideo(video, timestamp);
-		const face = faceLandmarkerRef.current.detectForVideo(video, timestamp);
-		const hand = handLandmarkerRef.current.detectForVideo(video, timestamp);
-
+		try {
+			const pose = poseLandmarkerRef.current.detectForVideo(video, timestamp);
+			const face = faceLandmarkerRef.current.detectForVideo(video, timestamp);
+			const hand = handLandmarkerRef.current.detectForVideo(video, timestamp);
+			return { pose, face, hand };
+		} catch (error) {
+			console.error('Error during analysis:', error);
+			return { pose: null, face: null, hand: null };
+		};
 		return { pose, face, hand };
 	};
 
