@@ -103,66 +103,79 @@ const Report = ({ id }: { id: string }) => {
 
 					{/* Evaluation Section */}
 					<div className="flex gap-5">
-						<ScrollDiv heading="Posture Evaluation" className="w-1/2">
-							<p>{data.posture_evaluator.tips}</p>
+						<ScrollDiv heading="Fluency Evaluation" className="w-1/2">
+							<p>{data.fluency_evaluator.comment}</p>
 						</ScrollDiv>
-						{/* <ScrollDiv heading="Speech Evaluation" className="w-1/2">
-							<p>Things you did well: {data.speech_evaluator.strengths}</p>
-							<p>Areas of possible improvement: {data.speech_evaluator.improvements}/100</p>
-							<p>Filler Words: {speechAnalysis.fillerWords}</p>
-							<p>Pauses: {totalPauses} (✔ {speechAnalysis.pauseAnalysis.appropriatePauses} / ✖ {speechAnalysis.pauseAnalysis.inappropriatePauses})</p>
-						</ScrollDiv> */}
+
+						<ScrollDiv heading="Posture Evaluation" className="w-1/2">
+							<ul>
+								{data.posture_evaluator.tips.map((point: string, index: number) => (
+									<li key={index} className="list-disc list-inside">{point}</li>
+								))}
+							</ul>
+						</ScrollDiv>
 					</div>
 
-					{/* Timestamp Highlights */}
-					{/* <Card className="bg-card w-full h-80 overflow-auto p-5">
-						<CardHeader className="font-medium text-lg">Timestamps</CardHeader>
+					<Card className="bg-card w-full h-96 overflow-auto p-5">
+						<CardHeader className="font-medium text-lg">Language Coach</CardHeader>
 						<CardBody className="grid grid-cols-2 gap-5">
 							<Card className="flex flex-col p-3 bg-success shadow-sm">
-								<CardHeader><h4 className="font-medium text-lg text-success">Good Moments</h4></CardHeader>
+								<CardHeader><h4 className="font-medium text-lg text-success">What went well</h4></CardHeader>
 								<CardBody>
 									<ul className="list-disc list-inside">
-										{timestamps.goodMoments.map((t: any, i: number) => (
+										{data.language_evaluator.strengths.map((t: any, i: number) => (
 											<li key={i} className="list-none">
-												🟢 {Math.floor(parseInt(t.start) / 60)}:{(parseInt(t.start) % 60).toString().padStart(2, '0')} - {Math.floor(parseInt(t.end) / 60)}:{(parseInt(t.end) % 60).toString().padStart(2, '0')}: {t.reason}
+												🟢 {t}
 											</li>
 										))}
 									</ul>
 								</CardBody>
 							</Card>
 							<Card className="flex flex-col p-3 bg-error shadow-sm">
-								<CardHeader><h4 className="font-medium text-lg text-error">Improvement Areas</h4></CardHeader>
+								<CardHeader><h4 className="font-medium text-lg text-error">Areas of improvement</h4></CardHeader>
 								<CardBody>
 									<ul className="list-disc list-inside">
-										{timestamps.improvementAreas.map((t: any, i: number) => (
+										{data.language_evaluator.improvements.map((t: any, i: number) => (
 											<li key={i} className="list-none">
-												🔴 {Math.floor(parseInt(t.start) / 60)}:{(parseInt(t.start) % 60).toString().padStart(2, '0')} - {Math.floor(parseInt(t.end) / 60)}:{(parseInt(t.end) % 60).toString().padStart(2, '0')}: {t.issue}
+												🔴 {t}
 											</li>
 										))}
 									</ul>
 								</CardBody>
 							</Card>
 						</CardBody>
-					</Card> */}
+					</Card>
 
-					{/* AI Recommendations */}
-					{/* <Card className="bg-card w-full h-auto overflow-auto p-5">
-						<CardHeader className="font-medium text-lg">AI Recommendations</CardHeader>
-						<CardBody className="flex flex-col gap-4">
-							{recommendations.map((rec: any, i: number) => (
-								<Card
-									key={i}
-									className={`p-4 shadow-sm ${rec.priority === "high" ? "bg-error" : rec.priority === "medium" ? "bg-warning" : "bg-success"}`}
-								>
-									<p><strong>Category:</strong> {rec.category}</p>
-									<p><strong>Issue:</strong> {rec.issue}</p>
-									<p><strong>Suggestion:</strong> {rec.suggestion}</p>
-									{/* <p><strong>Priority:</strong> <span className="capitalize">{rec.priority}</span></p>
-								</Card>
-							))
+
+					<Card className="bg-card w-full h-96 overflow-auto p-5">
+						<CardHeader className="font-medium text-lg">Speech Evaluator</CardHeader>
+						<CardBody className="grid grid-cols-2 gap-5">
+							<Card className="flex flex-col p-3 bg-success shadow-sm">
+								<CardHeader><h4 className="font-medium text-lg text-success">What went well</h4></CardHeader>
+								<CardBody>
+									<ul className="list-disc list-inside">
+										{data.speech_evaluator.strengths.map((t: any, i: number) => (
+											<li key={i} className="list-none">
+												🟢 {t}
+											</li>
+										))}
+									</ul>
+								</CardBody>
+							</Card>
+							<Card className="flex flex-col p-3 bg-error shadow-sm">
+								<CardHeader><h4 className="font-medium text-lg text-error">Areas of improvement</h4></CardHeader>
+								<CardBody>
+									<ul className="list-disc list-inside">
+										{data.speech_evaluator.improvements.map((t: any, i: number) => (
+											<li key={i} className="list-none">
+												🔴 {t}
+											</li>
+										))}
+									</ul>
+								</CardBody>
+							</Card>
 						</CardBody>
-					</Card>  */}
-
+					</Card>
 				</div >
 			</div >
 		</AuthGuard>
