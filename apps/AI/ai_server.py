@@ -9,6 +9,7 @@ import json
 import asyncio
 import logging
 import tempfile
+import io
 from datetime import datetime
 from typing import Optional
 from pathlib import Path
@@ -19,6 +20,7 @@ from fastapi import FastAPI, File, UploadFile, Form, HTTPException, BackgroundTa
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
+from pydub import AudioSegment
 
 from main import get_feedback
 from schema import PostureFeatures, FrontendResponse
@@ -116,12 +118,14 @@ async def analyze_recording(
     """
     try:
         # Validate input - be more lenient with content types
+        logger.info(f"")
         if audio_file.content_type and not (
             audio_file.content_type.startswith('audio/') or 
+            audio_file.content_type == 'video/webm' or
             audio_file.content_type == 'application/octet-stream' or
-            audio_file.filename.endswith(('.wav', '.mp3', '.m4a'))
+            audio_file.filename.endswith(('.wav', '.mp3', '.m4a', '.webm'))
         ):
-            raise HTTPException(status_code=400, detail="Invalid audio file format")
+            raise HTTPException(status_code=400, detail=f"Invalid audio file format: {audio_file.content_type}\nAUDIO FILE TYPE: {audio_file.content_type}; DOMAIN: {domain}; FEATURES: {posture_features}")
         
         # Parse posture features
         try:
@@ -193,16 +197,34 @@ async def process_analysis(
     filename: str
 ):
     """Process the audio analysis in the background"""
-    temp_file = None
     temp_audio_path = None
     try:
+        # Update job status
+        processing_jobs[recording_id].message = "Converting audio to WAV..."
+        processing_jobs[recording_id].progress = 5.0
+
+        # Convert webm to wav in memory
+        try:
+            webm_file = io.BytesIO(audio_content)
+            sound = AudioSegment.from_file(webm_file, format='webm')
+            
+            wav_file = io.BytesIO()
+            sound.export(wav_file, format='wav')
+            wav_content = wav_file.getvalue()
+            logger.info(f"Successfully converted {filename} to WAV format.")
+        except Exception as conversion_error:
+            logger.error(f"Audio conversion failed for {filename}: {conversion_error}")
+            # Fallback to original content if conversion fails
+            wav_content = audio_content
+
+
         # Update job status
         processing_jobs[recording_id].message = "Saving audio file..."
         processing_jobs[recording_id].progress = 10.0
         
         # Save uploaded file to temporary location
         with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
-            temp_file.write(audio_content)
+            temp_file.write(wav_content)
             temp_file.flush()
             temp_audio_path = temp_file.name
         
@@ -223,9 +245,7 @@ async def process_analysis(
             temp_audio_path,
             fluency_model,
             posture_data,
-            FrontendResponse,
-            progress_callback=progress_callback,
-            domain=domain
+            FrontendResponse
         )
         
         # Parse the JSON result (info fields are already included)

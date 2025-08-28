@@ -138,72 +138,69 @@ const RecordingPage = () => {
 			await apiStopRecording(currentRecording.id);
 
 			mediaRecorderRef.current.onstop = async () => {
-				console.log("MediaRecorder stopped, exporting...");
-				console.log("Feedback: ", feedback);
-
+				console.log("MediaRecorder stopped, processing...");
 				setIsProcessing(true);
 
-				await exportWavFromRecording(recordedChunksRef.current, async (wavBlob) => {
-					try {
-						setIsProcessing(false);
-						setIsUploading(true);
+				// Create a blob from the recorded chunks directly
+				const audioBlob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
 
-						// Transform posture data to match backend schema
-						const transformedPostureData = transformPostureDataForBackend(feedback);
-						console.log("Uploading with posture data:", transformedPostureData);
+				try {
+					setIsProcessing(false);
+					setIsUploading(true);
 
-						// Create a file from the blob
-						const audioFile = new File([wavBlob], 'recording.wav', { type: 'audio/wav' });
+					const transformedPostureData = feedback;
+					console.log("Uploading with posture data:", transformedPostureData);
 
-						// Upload to backend with posture features and progress tracking
-						await uploadAudio(
-							currentRecording.id,
-							audioFile,
-							transformedPostureData,
-						);
+					// Create a file from the blob
+					const audioFile = new File([audioBlob], 'recording.webm', { type: 'video/webm' });
 
-						console.log("✅ Recording uploaded successfully!");
-						setIsUploading(false);
-						setIsDone(true);
-						setIsProcessing(false);
+					// Upload to backend
+					await uploadAudio(
+						currentRecording.id,
+						audioFile,
+						transformedPostureData,
+					);
 
+					console.log("✅ Recording uploaded successfully!");
+					setIsUploading(false);
+					setIsDone(true); // Show final spinner
 
-						// Wait for backend to process
-						await delay(3000); // give Redis worker time to finish
+					// Polling for analysis result
+					let attempts = 0;
+					const maxAttempts = 60; // Poll for up to 5 minutes (60 * 5s)
+					let analysisData = null;
 
-						let attempts = 0;
-						const maxAttempts = 5;
-						let analysisData = null;
-
-						while (attempts < maxAttempts) {
-							try {
-								console.log("🔄 Polling for analysis...");
-								const analysis = await fetchRecordingAnalysis(currentRecording.id);
-								if (analysis) {
-									console.log("✅ Analysis fetched:", analysis);
-									analysisData = analysis;
-									break;
-								}
-							} catch {
-								console.warn("⌛ Analysis not ready, retrying...");
+					while (attempts < maxAttempts) {
+						try {
+							console.log(`🔄 Polling for analysis... Attempt ${attempts + 1}`
+							);
+							const analysis = await fetchRecordingAnalysis(currentRecording.id);
+							if (analysis) {
+								console.log("✅ Analysis fetched:", analysis);
+								analysisData = analysis;
+								break;
 							}
-							await delay(3000);
-							attempts++;
+						} catch (pollError) {
+							console.warn("⌛ Analysis not ready, retrying...");
 						}
-
-						if (analysisData) {
-							// Redirect to feedback result page and pass recording ID or data
-							router.push(`/feedback/${currentRecording.id}`);
-						} else {
-							console.error("❌ Analysis not ready after multiple attempts.");
-						}
-
-					} catch (error) {
-						console.error("❌ Failed to upload recording:", error);
-					} finally {
-						setIsDone(false);
+						await delay(5000); // Wait 5 seconds between polls
+						attempts++;
 					}
-				});
+
+					setIsDone(false); // Hide final spinner
+
+					if (analysisData) {
+						router.push(`/feedback/${currentRecording.id}`);
+					} else {
+						console.error("❌ Analysis not ready after multiple attempts.");
+						// Handle timeout error appropriately in the UI
+					}
+
+				} catch (error) {
+					console.error("❌ Failed to upload recording:", error);
+					setIsProcessing(false);
+					setIsUploading(false);
+				}
 			};
 
 			mediaRecorderRef.current.stop();
