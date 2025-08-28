@@ -60,12 +60,6 @@ const Report = ({ id }: { id: string }) => {
 		);
 	}
 
-	const { info, overall, speechAnalysis, postureAnalysis, recommendations, timestamps } = data;
-
-	const totalPauses =
-		speechAnalysis.pauseAnalysis.appropriatePauses +
-		speechAnalysis.pauseAnalysis.inappropriatePauses;
-
 	return (
 		<AuthGuard>
 			<div className="relative font-lato mx-auto px-8 py-10">
@@ -73,8 +67,8 @@ const Report = ({ id }: { id: string }) => {
 
 					<Card className="flex flex-row items-center justify-between bg-card w-full p-5">
 						<div className="flex flex-col">
-							<h2 className="text-2xl font-bold mb-1 text-primary"><span className="font-medium">Category: </span>{info.category}</h2>
-							<p>Report generated on: {new Date(info.reportCreated).toDateString()}</p>
+							<h2 className="text-2xl font-bold mb-1 text-primary"><span className="font-medium">Category: </span>{data.info.category}</h2>
+							<p>Report generated on: {new Date(data.info.reportCreated).toDateString()}</p>
 						</div>
 						<Button
 							onClick={handleDownloadPDF}
@@ -87,43 +81,41 @@ const Report = ({ id }: { id: string }) => {
 
 					{/* Overall Score */}
 					<div className="flex items-start justify-between">
-						<ScoreCard percent={overall.score} />
+						<ScoreCard percent={data.overall_score} />
 						<div className="flex flex-wrap justify-end gap-5">
-							<Meter type="fluency" score={speechAnalysis.pace} />
-							<Meter type="clarity" score={speechAnalysis.clarity} />
-							<Meter type="grammar" score={speechAnalysis.fillerWords} />
-							<Meter type="confidence" score={postureAnalysis.confidence} />
-							<Meter type="posture" score={postureAnalysis.posture} />
-							<Meter type="structure" score={totalPauses} />
+							<Meter type="fluency" score={data.fluency_evaluator.fluency_score} />
+							<Meter type="clarity" score={data.speech_evaluator.clarity_score} />
+							<Meter type="grammar" score={data.language_evaluator.grammar_score} />
+							<Meter type="confidence" score={data.speech_evaluator.confidence_score} />
+							<Meter type="posture" score={data.posture_evaluator.score} />
+							<Meter type="structure" score={data.language_evaluator.structure_score} />
 						</div>
 					</div>
 
 					{/* Summary & WPM */}
 					<div className="flex gap-5">
 						<Card className="w-full bg-card h-80 overflow-auto p-5">
-							<CardHeader className="font-medium text-lg">Summary</CardHeader>
-							<CardBody><p className="text-base text-text">{overall.summary}</p></CardBody>
+							<CardHeader className="font-medium text-lg">Transcript</CardHeader>
+							<CardBody><p className="text-base text-text">{data.transcript}</p></CardBody>
 						</Card>
-						<WordsMeter wpm={speechAnalysis.pace * 1.5} />
+						<WordsMeter wpm={data.speaking_rate} />
 					</div>
 
 					{/* Evaluation Section */}
 					<div className="flex gap-5">
 						<ScrollDiv heading="Posture Evaluation" className="w-1/2">
-							<p>Eye Contact: {postureAnalysis.eyeContact}/100</p>
-							<p>Gestures: {postureAnalysis.gestures}/100</p>
-							<p>Confidence: {postureAnalysis.confidence}/100</p>
+							<p>{data.posture_evaluator.tips}</p>
 						</ScrollDiv>
-						<ScrollDiv heading="Speech Evaluation" className="w-1/2">
-							<p>Clarity: {speechAnalysis.clarity}/100</p>
-							<p>Volume: {speechAnalysis.volume}/100</p>
+						{/* <ScrollDiv heading="Speech Evaluation" className="w-1/2">
+							<p>Things you did well: {data.speech_evaluator.strengths}</p>
+							<p>Areas of possible improvement: {data.speech_evaluator.improvements}/100</p>
 							<p>Filler Words: {speechAnalysis.fillerWords}</p>
 							<p>Pauses: {totalPauses} (✔ {speechAnalysis.pauseAnalysis.appropriatePauses} / ✖ {speechAnalysis.pauseAnalysis.inappropriatePauses})</p>
-						</ScrollDiv>
+						</ScrollDiv> */}
 					</div>
 
 					{/* Timestamp Highlights */}
-					<Card className="bg-card w-full h-80 overflow-auto p-5">
+					{/* <Card className="bg-card w-full h-80 overflow-auto p-5">
 						<CardHeader className="font-medium text-lg">Timestamps</CardHeader>
 						<CardBody className="grid grid-cols-2 gap-5">
 							<Card className="flex flex-col p-3 bg-success shadow-sm">
@@ -151,10 +143,10 @@ const Report = ({ id }: { id: string }) => {
 								</CardBody>
 							</Card>
 						</CardBody>
-					</Card>
+					</Card> */}
 
 					{/* AI Recommendations */}
-					<Card className="bg-card w-full h-auto overflow-auto p-5">
+					{/* <Card className="bg-card w-full h-auto overflow-auto p-5">
 						<CardHeader className="font-medium text-lg">AI Recommendations</CardHeader>
 						<CardBody className="flex flex-col gap-4">
 							{recommendations.map((rec: any, i: number) => (
@@ -165,11 +157,11 @@ const Report = ({ id }: { id: string }) => {
 									<p><strong>Category:</strong> {rec.category}</p>
 									<p><strong>Issue:</strong> {rec.issue}</p>
 									<p><strong>Suggestion:</strong> {rec.suggestion}</p>
-									{/* <p><strong>Priority:</strong> <span className="capitalize">{rec.priority}</span></p> */}
+									{/* <p><strong>Priority:</strong> <span className="capitalize">{rec.priority}</span></p>
 								</Card>
-							))}
+							))
 						</CardBody>
-					</Card>
+					</Card>  */}
 
 				</div >
 			</div >
