@@ -44,6 +44,7 @@ services:
       - MAX_FILE_SIZE=${MAX_FILE_SIZE:-50MB}
       - ALLOWED_AUDIO_TYPES=${ALLOWED_AUDIO_TYPES:-audio/wav,audio/webm,audio/mp3,audio/m4a}
       - AI_PROCESSING_TIMEOUT=${AI_PROCESSING_TIMEOUT:-300000}
+      - AI_SERVICE_URL=${AI_SERVICE_URL:-https://57095d3b5a3c.ngrok-free.app}
     volumes:
       - ./data:/app/data
       - ./media:/app/media
