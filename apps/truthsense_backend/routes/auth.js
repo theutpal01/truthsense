@@ -7,9 +7,160 @@ const router = express.Router();
 
 /**
  * @swagger
+ * /api/auth/signup:
+ *   post:
+ *     summary: User signup with email and password
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *               password:
+ *                 type: string
+ *                 minLength: 8
+ *                 example: mySecurePassword123
+ *     responses:
+ *       201:
+ *         description: User created successfully, OTP sent for verification
+ *       400:
+ *         description: Bad request or email already exists
+ *       429:
+ *         description: Too many requests
+ */
+router.post('/signup', loginLimiter, authController.signup);
+
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: User login with email and password
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *               password:
+ *                 type: string
+ *                 example: mySecurePassword123
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Login successful
+ *                 token:
+ *                   type: string
+ *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *                 user:
+ *                   type: object
+ *       401:
+ *         description: Invalid credentials
+ *       429:
+ *         description: Too many requests
+ */
+router.post('/login', loginLimiter, authController.login);
+
+/**
+ * @swagger
+ * /api/auth/forgot-password:
+ *   post:
+ *     summary: Request password reset OTP
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *     responses:
+ *       200:
+ *         description: Password reset OTP sent successfully
+ *       400:
+ *         description: Bad request or email not found
+ *       429:
+ *         description: Too many requests
+ */
+router.post('/forgot-password', otpLimiter, authController.forgotPassword);
+
+/**
+ * @swagger
+ * /api/auth/reset-password:
+ *   post:
+ *     summary: Reset password with OTP
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - code
+ *               - newPassword
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *               code:
+ *                 type: string
+ *                 length: 6
+ *                 example: "123456"
+ *               newPassword:
+ *                 type: string
+ *                 minLength: 8
+ *                 example: myNewSecurePassword123
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
+ *       400:
+ *         description: Invalid OTP or request
+ *       429:
+ *         description: Too many requests
+ */
+router.post('/reset-password', loginLimiter, authController.resetPassword);
+
+/**
+ * @swagger
  * /api/auth/send-otp:
  *   post:
- *     summary: Send OTP to email
+ *     summary: Send OTP to email (legacy OTP-only login)
  *     tags: [Authentication]
  *     requestBody:
  *       required: true

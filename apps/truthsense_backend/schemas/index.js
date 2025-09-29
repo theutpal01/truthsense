@@ -71,13 +71,34 @@ const FrontendResponse = Joi.object({
 });
 
 // Authentication schemas
+const SignupRequest = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().min(8).required()
+});
+
 const LoginRequest = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().min(8).required()
+});
+
+const ForgotPasswordRequest = Joi.object({
   email: Joi.string().email().required()
+});
+
+const ResetPasswordRequest = Joi.object({
+  email: Joi.string().email().required(),
+  code: Joi.string().length(6).required(),
+  newPassword: Joi.string().min(8).required()
 });
 
 const VerifyOTPRequest = Joi.object({
   email: Joi.string().email().required(),
   code: Joi.string().length(6).required()
+});
+
+// Legacy OTP-only login (keeping for backward compatibility)
+const OTPLoginRequest = Joi.object({
+  email: Joi.string().email().required()
 });
 
 // Recording schemas
@@ -93,8 +114,12 @@ const UploadRecordingRequest = Joi.object({
 module.exports = {
   PostureFeatures,
   FrontendResponse,
+  SignupRequest,
   LoginRequest,
+  ForgotPasswordRequest,
+  ResetPasswordRequest,
   VerifyOTPRequest,
+  OTPLoginRequest,
   StartRecordingRequest,
   UploadRecordingRequest
 };
