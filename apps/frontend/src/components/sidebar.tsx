@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { TbLayoutDashboard, TbWaveSine, TbChartPie, TbHistory, TbSettings, TbLogout } from "react-icons/tb";
+import { TbLayoutDashboard, TbWaveSine, TbChartPie, TbHistory, TbLogout } from "react-icons/tb";
 import { Image, Switch } from "@heroui/react";
 import { useAuth } from "@/hooks/useAPI";
 import { useRouter } from "next/navigation";

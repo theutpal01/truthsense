@@ -6,13 +6,11 @@ import { IoMdInformationCircleOutline } from "react-icons/io";
 import { PiStopFill } from 'react-icons/pi';
 import Webcam from 'react-webcam';
 import { CountdownCircleTimer } from 'react-countdown-circle-timer';
-import { exportWavFromRecording } from '@/utils/audio';
 import { usePostureAnalyzer } from '@/hooks/usePostureAnalyzer';
 import { FeedbackCounts, initialFeedbackCounts } from '@/types/feedback.types';
 import { delay, updateFeedback } from '@/utils/process';
 import RecordingTimerCircle from './ui/timer';
 import { useRecording, useRecordingDomains } from '@/hooks/useAPI';
-import { transformPostureDataForBackend } from '@/utils/postureDataTransform';
 import { useRouter } from 'next/navigation';
 
 const MAX_DURATION = 15 * 60;
@@ -181,7 +179,7 @@ const RecordingPage = () => {
 								break;
 							}
 						} catch (pollError) {
-							console.warn("⌛ Analysis not ready, retrying...");
+							console.warn(`⌛ Analysis not ready, retrying... due to ${pollError}`);
 						}
 						await delay(5000); // Wait 5 seconds between polls
 						attempts++;
