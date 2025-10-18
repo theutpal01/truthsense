@@ -2,7 +2,7 @@
 import Loading from '@/components/ui/loading';
 import { Button, Card, CardBody, CardHeader, Image } from '@heroui/react';
 import { useRouter } from 'next/navigation';
-import React from 'react';
+import React, { useRef } from 'react';
 import { FaChevronDown } from 'react-icons/fa';
 import { TiMicrophone } from 'react-icons/ti';
 
@@ -51,13 +51,23 @@ const info = [{
 const FeatureCards = () => {
 	const router = useRouter();
 	const [loading, setLoading] = React.useState(false);
+	const contentRef = useRef<HTMLDivElement>(null);
 
 	const handleRedirect = () => {
 		setLoading(true);
 		router.push('/record');
 		setTimeout(() => {
 			setLoading(false);
-		}, 2000); // Simulate loading time
+		}, 2000);
+	};
+
+	const handleLoadMore = () => {
+		setTimeout(() => {
+			contentRef.current?.scrollIntoView({
+				behavior: 'smooth',
+				block: 'start'
+			});
+		}, 150);
 	};
 
 	return (
@@ -86,16 +96,21 @@ const FeatureCards = () => {
 				</div>
 
 				<div>
-					<Card className="py-3 bg-record-btn !w-full !max-w-full shadow-md mx-auto">
-						<div className=' flex flex-col gap-1 justify-center items-center cursor-pointer w-fit mx-auto'>
-							<p className="text-text text-sm">Load More </p>
-							<FaChevronDown />
-						</div>
+					<Card
+						className={`bg-record-btn !w-full !max-w-full shadow-md mx-auto transition-all duration-300 ease-in-out py-3`}
+					>
+						<button
+							onClick={handleLoadMore}
+							className="flex flex-col gap-1 justify-center items-center w-fit mx-auto cursor-pointer hover:text-primary transition-all duration-300"
+						>
+							<p className="text-text text-sm">Load More</p>
+							<FaChevronDown className={`transition-transform duration-300`} />
+						</button>
 					</Card>
 				</div>
 			</div>
 
-			<div className='w-full flex flex-col justify-center items-center mt-8'>
+			<div ref={contentRef} className='w-full flex flex-col justify-center items-center mt-8'>
 				<div className='h-fit flex gap-8 px-8'>
 					<div className='w-7/12 text-left'>
 						<h2 className="text-3xl font-semibold text-primary mb-4">Why Communication Matters</h2>
