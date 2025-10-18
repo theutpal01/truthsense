@@ -3,6 +3,7 @@ import { Geist, Lato, Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import ClientLayoutWrapper from "./client-wrapper";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -38,11 +39,13 @@ export default function RootLayout({
 				className={`${geistSans.variable} ${lato.variable} ${inter.variable} antialiased bg-background overglow-hidden`}
 			>
 				<Providers>
-					<ClientLayoutWrapper>
-						<div className="overflow-hidden relative min-h-screen">
-							{children}
-						</div>
-					</ClientLayoutWrapper>
+					<ThemeProvider>
+						<ClientLayoutWrapper>
+							<div className="overflow-hidden relative min-h-screen">
+								{children}
+							</div>
+						</ClientLayoutWrapper>
+					</ThemeProvider>
 				</Providers>
 			</body>
 		</html>
