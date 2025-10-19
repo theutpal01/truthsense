@@ -72,7 +72,6 @@ const FeatureCards = () => {
 
 	return (
 		<section className="*:pt-16 *:pb-6 px-4 bg-background flex flex-col justify-center items-center overflow-auto">
-
 			<div className="w-full flex flex-col justify-between h-screen text-center">
 
 				<div className='flex flex-col gap-4'>
