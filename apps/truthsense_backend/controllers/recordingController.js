@@ -5,8 +5,10 @@ const { StartRecordingRequest, UploadRecordingRequest, PostureFeatures } = requi
 class RecordingController {
   async getRecordingDomains(req, res) {
     try {
+      console.log('🎯 [Controller] Getting recording domains');
       const domains = recordingService.getRecordingDomains();
-      
+      console.log(`✅ [Controller] Found ${domains.length} domains`);
+
       res.json({
         success: true,
         domains
@@ -22,9 +24,13 @@ class RecordingController {
 
   async createRecording(req, res) {
     try {
+      console.log(`🎯 [Controller] Creating recording for user: ${req.user.id}`);
+      console.log(`📝 [Controller] Request body:`, req.body);
+
       // Validate request
       const { error, value } = StartRecordingRequest.validate(req.body);
       if (error) {
+        console.log(`❌ [Controller] Validation failed: ${error.details[0].message}`);
         return res.status(400).json({
           success: false,
           error: error.details[0].message
@@ -32,12 +38,15 @@ class RecordingController {
       }
 
       const { domain } = value;
+      console.log(`🎤 [Controller] Domain: ${domain}`);
       const result = await recordingService.createRecording(req.user.id, domain);
 
       if (!result.success) {
+        console.log(`❌ [Controller] Failed to create recording:`, result.error);
         return res.status(400).json(result);
       }
 
+      console.log(`✅ [Controller] Recording created successfully: ${result.recording.id}`);
       res.status(201).json(result);
     } catch (error) {
       console.error('❌ Create recording error:', error);
@@ -51,12 +60,16 @@ class RecordingController {
   async startRecording(req, res) {
     try {
       const { recordingId } = req.params;
+      console.log(`▶️  [Controller] Starting recording: ${recordingId} for user: ${req.user.id}`);
+
       const result = await recordingService.startRecording(recordingId, req.user.id);
 
       if (!result.success) {
+        console.log(`❌ [Controller] Failed to start recording:`, result.error);
         return res.status(400).json(result);
       }
 
+      console.log(`✅ [Controller] Recording started successfully`);
       res.json(result);
     } catch (error) {
       console.error('❌ Start recording error:', error);
@@ -70,12 +83,16 @@ class RecordingController {
   async stopRecording(req, res) {
     try {
       const { recordingId } = req.params;
+      console.log(`⏹️  [Controller] Stopping recording: ${recordingId} for user: ${req.user.id}`);
+
       const result = await recordingService.stopRecording(recordingId, req.user.id);
 
       if (!result.success) {
+        console.log(`❌ [Controller] Failed to stop recording:`, result.error);
         return res.status(400).json(result);
       }
 
+      console.log(`✅ [Controller] Recording stopped successfully`);
       res.json(result);
     } catch (error) {
       console.error('❌ Stop recording error:', error);
@@ -89,20 +106,30 @@ class RecordingController {
   async uploadRecording(req, res) {
     try {
       const { recordingId } = req.params;
+      console.log(`📤 [Controller] Uploading recording: ${recordingId} for user: ${req.user.id}`);
 
       // Check if audio file is uploaded
       if (!req.file) {
+        console.log(`❌ [Controller] No audio file in request`);
         return res.status(400).json({
           success: false,
           error: 'Audio file is required'
         });
       }
 
+      console.log(`📁 [Controller] File details:`, {
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: `${(req.file.size / 1024 / 1024).toFixed(2)} MB`
+      });
+
       // Validate posture features
       let postureFeatures;
       try {
         postureFeatures = JSON.parse(req.body.postureFeatures || '{}');
+        console.log(`🧍 [Controller] Posture features parsed successfully`);
       } catch (parseError) {
+        console.log(`❌ [Controller] Failed to parse posture features:`, parseError);
         return res.status(400).json({
           success: false,
           error: 'Invalid posture features JSON'
@@ -111,11 +138,14 @@ class RecordingController {
 
       const { error } = PostureFeatures.validate(postureFeatures);
       if (error) {
+        console.log(`❌ [Controller] Posture features validation failed:`, error.details[0].message);
         return res.status(400).json({
           success: false,
           error: `Posture features validation error: ${error.details[0].message}`
         });
       }
+
+      console.log(`✅ [Controller] Validation passed, saving audio file...`);
 
       // Save audio file and posture features
       const result = await recordingService.saveAudioFile(
@@ -126,11 +156,16 @@ class RecordingController {
       );
 
       if (!result.success) {
+        console.log(`❌ [Controller] Failed to save audio:`, result.error);
         return res.status(400).json(result);
       }
 
+      console.log(`✅ [Controller] Audio saved, queuing AI processing...`);
+
       // Queue AI processing job
       await aiProcessingService.queueProcessing(recordingId);
+
+      console.log(`✅ [Controller] Upload complete, processing queued`);
 
       res.json({
         success: true,
@@ -149,11 +184,16 @@ class RecordingController {
   async getRecording(req, res) {
     try {
       const { recordingId } = req.params;
+      console.log(`🔍 [Controller] Getting recording: ${recordingId} for user: ${req.user.id}`);
+
       const result = await recordingService.getRecording(recordingId, req.user.id);
 
       if (!result.success) {
+        console.log(`❌ [Controller] Recording not found:`, result.error);
         return res.status(404).json(result);
       }
+
+      console.log(`📊 [Controller] Recording status: ${result.recording.status}`);
 
       // Format response based on status
       let response = {
@@ -163,9 +203,10 @@ class RecordingController {
       };
 
       if (result.recording.status === 'processed' && result.recording.analysisResult) {
+        console.log(`✅ [Controller] Analysis available, sending response`);
         response.analysis = result.recording.analysisResult;
         response.processedAt = result.recording.processedAt;
-        
+
         // Ensure info fields are present in the analysis
         if (response.analysis && !response.analysis.info) {
           response.analysis.info = {
@@ -174,7 +215,10 @@ class RecordingController {
           };
         }
       } else if (result.recording.status === 'failed') {
+        console.log(`❌ [Controller] Recording processing failed: ${result.recording.errorMessage}`);
         response.error = result.recording.errorMessage || 'Processing failed';
+      } else {
+        console.log(`⏳ [Controller] Recording still in status: ${result.recording.status}`);
       }
 
       res.json(response);

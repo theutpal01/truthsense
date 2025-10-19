@@ -114,16 +114,17 @@ class AIProcessingService {
 
 	async queueProcessing(recordingId) {
 		try {
+			console.log(`🚀 [AI Service] Queueing processing for recording: ${recordingId}`);
 			const job = await this.processingQueue.add('analyze-recording', {
 				recordingId
 			}, {
 				delay: 1000 // Small delay to ensure database consistency
 			});
 
-			console.log(`📋 Queued processing job ${job.id} for recording ${recordingId}`);
+			console.log(`✅ [AI Service] Queued processing job ${job.id} for recording ${recordingId}`);
 			return { success: true, jobId: job.id };
 		} catch (error) {
-			console.error('❌ Failed to queue processing job:', error);
+			console.error(`❌ [AI Service] Failed to queue processing job for ${recordingId}:`, error);
 			return { success: false, error: error.message };
 		}
 	}
@@ -149,21 +150,30 @@ class AIProcessingService {
 		const maxRetries = 3;
 		const retryDelay = 5000; // 5 seconds
 
+		console.log(`🌐 [AI Service] AI Service URL: ${AI_SERVICE_URL}`);
+
 		for (let attempt = 1; attempt <= maxRetries; attempt++) {
 			try {
-				console.log(`📡 Calling AI service (attempt ${attempt}/${maxRetries})...`);
+				console.log(`📡 [AI Service] Calling AI service (attempt ${attempt}/${maxRetries})...`);
 
 				// Prepare form data
 				const formData = new FormData();
 				formData.append('recording_id', recording.id);
 				formData.append('domain', recording.domain);
 				formData.append('posture_features', JSON.stringify(recording.postureFeatures || {}));
-				
+
+				console.log(`📦 [AI Service] Form data prepared:`, {
+					recording_id: recording.id,
+					domain: recording.domain,
+					has_posture_features: !!recording.postureFeatures
+				});
+
 				// Read and append audio file
 				if (!recording.audioFilePath || !fs.existsSync(recording.audioFilePath)) {
 					throw new Error(`Audio file not found: ${recording.audioFilePath}`);
 				}
-				
+
+				console.log(`📁 [AI Service] Reading audio file: ${recording.audioFilePath}`);
 				const audioStream = fs.createReadStream(recording.audioFilePath);
 				formData.append('audio_file', audioStream, {
 					filename: recording.audioFileName,
@@ -171,6 +181,7 @@ class AIProcessingService {
 				});
 
 				// Make request to AI service
+				console.log(`🚀 [AI Service] Sending request to ${AI_SERVICE_URL}/analyze`);
 				const response = await fetch(`${AI_SERVICE_URL}/analyze`, {
 					method: 'POST',
 					body: formData,
