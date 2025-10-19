@@ -66,7 +66,6 @@ export const usePostureAnalyzer = () => {
 			console.error('Error during analysis:', error);
 			return { pose: null, face: null, hand: null };
 		};
-		return { pose, face, hand };
 	};
 
 	return { init, analyze };
