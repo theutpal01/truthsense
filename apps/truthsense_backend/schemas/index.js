@@ -72,6 +72,7 @@ const FrontendResponse = Joi.object({
 
 // Authentication schemas
 const SignupRequest = Joi.object({
+  name: Joi.string().min(2).max(100).required(),
   email: Joi.string().email().required(),
   password: Joi.string().min(8).required()
 });
