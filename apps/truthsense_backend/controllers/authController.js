@@ -109,8 +109,8 @@ class AuthController {
         });
       }
 
-      const { email, password } = value;
-      const result = await authService.signup(email, password);
+      const { name, email, password } = value;
+      const result = await authService.signup(name, email, password);
 
       if (!result.success) {
         return res.status(400).json(result);

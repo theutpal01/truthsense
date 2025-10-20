@@ -17,6 +17,7 @@ const testRoutes = require('./routes/test');
 
 // Import middleware
 const { apiLimiter } = require('./middleware/rateLimiter');
+const { logRequest } = require('./middleware/logger');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,7 +25,7 @@ const PORT = process.env.PORT || 3000;
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
+  origin: process.env.NODE_ENV === 'production'
     ? ['https://truthsense.com', 'https://www.truthsense.com']
     : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'],
   credentials: true
@@ -33,6 +34,9 @@ app.use(cors({
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Request logging middleware (add this after body parsers)
+app.use(logRequest);
 
 // Rate limiting
 app.use('/api', apiLimiter);

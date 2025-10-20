@@ -158,16 +158,39 @@ class AuthService {
     }
   }
 
-  async signup(email, password) {
+  async signup(name, email, password) {
     try {
       const existingUser = await User.findOne({ where: { email } });
-      if (existingUser) {
-        return { success: false, error: 'Email already registered' };
+
+      // If user exists and is verified, return error
+      if (existingUser && existingUser.isVerified) {
+        return { success: false, error: 'User already exists and is verified. Please login instead.' };
       }
 
       const hashedPassword = await this.hashPassword(password);
-      
+
+      // If user exists but not verified, update their info and resend OTP
+      if (existingUser && !existingUser.isVerified) {
+        await existingUser.update({
+          name,
+          password: hashedPassword
+        });
+
+        const result = await this.sendOTP(email);
+        if (!result.success) {
+          return { success: false, error: 'Failed to send verification OTP' };
+        }
+
+        return {
+          success: true,
+          message: 'Account updated. Please verify your email with the OTP sent.',
+          userId: existingUser.id
+        };
+      }
+
+      // Create new user
       const user = await User.create({
+        name,
         email,
         password: hashedPassword,
         isVerified: false
@@ -179,8 +202,8 @@ class AuthService {
         return { success: false, error: 'Failed to send verification OTP' };
       }
 
-      return { 
-        success: true, 
+      return {
+        success: true,
         message: 'User created successfully. Please verify your email with the OTP sent.',
         userId: user.id
       };
