@@ -181,6 +181,67 @@ class ApiService {
 	async delete<T>(endpoint: string, requiresAuth = true): Promise<T> {
 		return this.request<T>(endpoint, { method: 'DELETE' }, requiresAuth)
 	}
+
+	async uploadFile<T>(
+		endpoint: string,
+		formData: FormData,
+		requiresAuth = true
+	): Promise<T> {
+		const url = `${this.baseURL}${endpoint}`
+		const headers: HeadersInit = {}
+
+		if (requiresAuth) {
+			try {
+				const accessToken = await this.getValidAccessToken()
+				headers.Authorization = `Bearer ${accessToken}`
+			} catch (error) {
+				throw new Error('Authentication required')
+			}
+		}
+		console.log("Uploading file to:", url);
+		console.log("Uploading file with data:")
+		try {
+			const response = await fetch(url, {
+				method: 'POST',
+				headers,
+				body: formData,
+			})
+
+			console.log("Upload response status:", response.status);
+
+			if (!response.ok) {
+				if (response.status === 401 && requiresAuth) {
+					// Try to refresh token and retry once
+					try {
+						const newAccessToken = await this.refreshAccessToken()
+						const retryResponse = await fetch(url, {
+							method: 'POST',
+							headers: {
+								...headers,
+								Authorization: `Bearer ${newAccessToken}`,
+							},
+							body: formData,
+						})
+
+						if (!retryResponse.ok) {
+							throw await this.handleErrorResponse(retryResponse)
+						}
+
+						return await retryResponse.json()
+					} catch (refreshError) {
+						throw refreshError
+					}
+				}
+
+				throw await this.handleErrorResponse(response)
+			}
+
+			return await response.json()
+		} catch (error) {
+			throw error
+		}
+	}
+
 }
 
 export const apiService = new ApiService()

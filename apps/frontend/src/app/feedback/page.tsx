@@ -1,14 +1,18 @@
 "use client";
-import { AuthGuard } from '@/services/auth-guard';
 import React from 'react'
 
 const FeedbackPage = () => {
 	return (
-		<AuthGuard>
-			<div className='h-screen w-full p-8 flex justify-center items-center'>
-				<p className='text-text mt-4'>Invalid feedback item selected.</p>
-			</div>
-		</AuthGuard>
+		<div className='flex flex-col items-center justify-center h-screen py-16'>
+			<div className='text-6xl mb-4'>📝</div>
+			<h3 className='text-xl font-semibold text-text mb-2'>
+				Feedback not found
+			</h3>
+			<p className='text-muted mb-6'>
+				The feedback page for this recording does not exist.
+			</p>
+
+		</div>
 	)
 }
 

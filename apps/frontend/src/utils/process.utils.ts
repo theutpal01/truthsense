@@ -102,3 +102,12 @@ export const updateFeedback = ({
 
 
 export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+
+export const changeCategoryCase = (category: string | null | undefined): string | undefined => {
+	if (!category) return undefined;
+
+	return category
+		.replace(/_/g, " ")
+		.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+}
