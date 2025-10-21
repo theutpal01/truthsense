@@ -15,6 +15,7 @@
 	"dependencies": {
 		"@heroui/react": "^2.8.1",
 		"@mediapipe/tasks-vision": "^0.10.22-rc.20250304",
+		"cloudinary": "^2.8.0",
 		"framer-motion": "^12.23.6",
 		"html2pdf.js": "^0.10.3",
 		"jsonwebtoken": "^9.0.2",
