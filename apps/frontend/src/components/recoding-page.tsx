@@ -15,11 +15,15 @@ import { useRouter } from 'next/navigation';
 import { recordingService } from '@/services/recording.service';
 import type { Recording, RecordingDomain } from '@/types/recording.types';
 import { toast } from 'react-toastify';
+import { uploadVideoToCloudinary } from '@/utils/cloudinary.utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { a } from 'framer-motion/client';
 
 const MAX_DURATION = 15 * 60;
 
 const RecordingPage = () => {
 	const router = useRouter();
+	const { user } = useAuth(); // Get authenticated user
 	const [elapsedTime, setElapsedTime] = useState(0);
 	const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
 
@@ -39,6 +43,7 @@ const RecordingPage = () => {
 	const [feedback, setFeedback] = useState<FeedbackCounts>(initialFeedbackCounts);
 	const frame = useRef<number>(0);
 	const [isLoading, setIsLoading] = useState(false);
+	const [uploadProgress, setUploadProgress] = useState(0);
 	const [showTimer, setShowTimer] = useState(false);
 
 	// Load domains on mount
@@ -63,7 +68,7 @@ const RecordingPage = () => {
 
 	const startRecording = async () => {
 		if (isLoading) return;
-		if (!webcamRef.current || !selectedDomain) return;
+		if (!webcamRef.current || !selectedDomain || !user) return;
 
 		recordedChunksRef.current = [];
 		frame.current = 0;
@@ -95,7 +100,6 @@ const RecordingPage = () => {
 
 			mediaRecorder.ondataavailable = (event) => {
 				if (event.data.size > 0) {
-					console.log("Chunk available", event.data);
 					recordedChunksRef.current.push(event.data);
 				}
 			};
@@ -106,7 +110,7 @@ const RecordingPage = () => {
 			const timer = setInterval(() => {
 				setElapsedTime(prev => {
 					if (prev + 1 >= MAX_DURATION) {
-						stopRecording(); // auto stop
+						stopRecording();
 						clearInterval(timer);
 						return 0;
 					}
@@ -136,7 +140,7 @@ const RecordingPage = () => {
 		setIsRecording(false);
 		setIsLoading(true);
 
-		if (!mediaRecorderRef.current || !currentRecording) return;
+		if (!mediaRecorderRef.current || !currentRecording || !user) return;
 
 		try {
 			// Stop the recording session with backend
@@ -146,59 +150,101 @@ const RecordingPage = () => {
 			mediaRecorderRef.current.onstop = async () => {
 				console.log("MediaRecorder stopped, processing...");
 
-				// Create a blob from the recorded chunks
-				const audioBlob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+				// Create video blob
+				const videoBlob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+				const videoFile = new File([videoBlob], 'recording.webm', { type: 'video/webm' });
+
+				console.log("📹 Video file created:", {
+					size: (videoFile.size / 1024 / 1024).toFixed(2) + ' MB',
+					type: videoFile.type
+				});
 
 				try {
-					// Create a file from the blob
-					const audioFile = new File([audioBlob], 'recording.webm', { type: 'video/webm' });
+					// STEP 1: Upload video to Cloudinary
+					await toast.promise(
+						async () => {
+							const cloudinaryResult = await uploadVideoToCloudinary(
+								videoFile,
+								user,
+								currentRecording.id,
+								(progress) => {
+									setUploadProgress(progress);
+									console.log(`Upload progress: ${progress}%`);
+								}
+							);
 
-					// Upload to backend
-					toast.promise(
-						delay(0).then(async () => {
+							return cloudinaryResult
+						},
+						{
+							pending: 'Uploading video...',
+							success: 'Video uploaded successfully!',
+							error: 'Failed to upload video.',
+						}
+					).then(async (cloudinaryResult) => {
+
+						try {
 							const uploadedRecording = await recordingService.uploadAudio(
 								currentRecording.id,
 								{
-									audioFile,
+									audioFile: videoFile,
 									postureFeatures: feedback,
+									secureUrl: cloudinaryResult.secure_url,
+									publicId: cloudinaryResult.public_id,
+									videoFileSize: videoFile.size,
 								}
 							);
+							console.log("✅ Recording data saved:", uploadedRecording);
 							setCurrentRecording(uploadedRecording);
-						}), {
-							pending: 'Uploading recording...',
-							success: 'Recording uploaded successfully!',
-							error: 'Failed to upload recording'
+						} catch (uploadErr) {
+							console.error("❌ Saving recording data failed:", uploadErr);
+							toast.error('Failed to save recording data');
 						}
-					);
 
-					// Use the built-in polling mechanism
+					}).catch((uploadErr) => {
+						console.error("❌ Cloudinary upload failed:", uploadErr);
+						throw uploadErr;
+					});
+
+					// STEP 2: Poll for analysis
 					try {
-						toast.promise(
-							delay(3000).then(async () => {
+
+						await toast.promise(
+							(async () => {
+								console.log("⏱️ Starting to poll for analysis...");
 								const processedRecording = await recordingService.pollRecordingStatus(
 									currentRecording.id,
 									5000, // Poll every 5 seconds
 									60    // Max 60 attempts (5 minutes)
 								);
-								console.log("✅ Recording processed:", processedRecording);
-								setIsLoading(false);
-								router.push(`/feedback/${currentRecording.id}`);
-							}), {
-								pending: 'Analyzing recording...',
-								success: 'Analysis complete! Redirecting...',
-								error: 'Analysis timed out. Please check back later.'
+								return processedRecording;
+							})(),
+							{
+								pending: 'Processing recording, please wait...',
+								success: 'Recording processed successfully!',
+								error: 'Failed to process recording.',
 							}
-						);
-					} catch (pollError: any) {
-						console.error("❌ Analysis polling failed:", pollError);
-						toast.error("Analysis timed out. Please check back later.");
+						).then(async (processedRecording) => {
+							console.log("✅ Recording processed:", processedRecording);
+							setIsLoading(false);
+							// Navigate to feedback page
+							router.push(`/feedback/${currentRecording.id}`);
+						}).catch((pollError) => {
+							console.error("❌ Analysis polling failed:", pollError);
+							toast.error("Analysis timed out. Please check back later.");
+							setIsLoading(false);
+						});
+
+					} catch (pollErr: any) {
+						console.error("❌ Failed to poll for analysis:", pollErr);
+						toast.error(pollErr.message || 'Failed to get analysis');
 						setIsLoading(false);
 					}
 
 				} catch (uploadError: any) {
-					console.error("❌ Failed to upload recording:", uploadError);
-					toast.error('Failed to upload recording');
+					console.error("❌ Failed to upload video:", uploadError);
+					toast.error(uploadError.message || 'Failed to upload video');
 					setIsLoading(false);
+					setUploadProgress(0);
 				}
 			};
 
@@ -241,6 +287,7 @@ const RecordingPage = () => {
 		setSelectKey(Date.now());
 		setFeedback(initialFeedbackCounts);
 		frame.current = 0;
+		setUploadProgress(0);
 	};
 
 	useEffect(() => {
@@ -326,7 +373,7 @@ const RecordingPage = () => {
 							elapsed={elapsedTime}
 						>
 							<button
-								onClick={isRecording ? stopRecording : () => {!isLoading ? setShowWarning(true) : null}}
+								onClick={isRecording ? stopRecording : () => { !isLoading && setShowWarning(true) }}
 								disabled={!selectedDomain || isLoading}
 								className={`w-[150px] h-[150px] rounded-full bg-record-btn shadow-lg flex items-center justify-center ${(selectedDomain && !isLoading) || (isRecording && !isLoading) ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'} transition-transform`}
 							>
@@ -341,10 +388,11 @@ const RecordingPage = () => {
 							</p>
 						)}
 
+
 						<p className="text-text text-center">
-							{selectedDomain
+							{selectedDomain && !isLoading
 								? (!isRecording ? 'Start Recording' : 'Finish Recording')
-								: "Select a domain to start recording"
+								: (!isLoading) ? "Select a domain to start recording" : ""
 							}
 						</p>
 					</div>

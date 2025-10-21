@@ -9,6 +9,8 @@ import React, { useEffect, useState } from 'react';
 import { FaTrash } from 'react-icons/fa';
 import { FaChevronRight } from 'react-icons/fa6';
 import { changeCategoryCase } from '@/utils/process.utils';
+import { deleteVideoFromCloudinary } from '@/utils/cloudinary.utils';
+import { toast } from 'react-toastify';
 
 const HistoryPage = () => {
 	const router = useRouter();
@@ -33,6 +35,7 @@ const HistoryPage = () => {
 			const sortedData = data.sort((a, b) =>
 				new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
 			);
+			console.log('Fetched recordings:', sortedData);
 			setRecordings(sortedData);
 		} catch (err: any) {
 			console.error('Failed to load recordings:', err);
@@ -52,9 +55,19 @@ const HistoryPage = () => {
 		setError(null);
 
 		try {
+			const publicId = recordings.find(r => r.id === id)?.publicId || null;
+			if (publicId) {
+				try {
+					await deleteVideoFromCloudinary(publicId);
+				} catch (cloudErr) {
+					console.error('Failed to delete video from Cloudinary:', cloudErr);
+				}
+			}
+
 			await recordingService.deleteRecording(id);
 			// Remove from local state immediately for better UX
 			setRecordings(prev => prev.filter(r => r.id !== id));
+			toast.success('Recording deleted successfully');
 		} catch (err: any) {
 			console.error("Failed to delete recording:", err);
 			setError(err.message || 'Failed to delete recording');

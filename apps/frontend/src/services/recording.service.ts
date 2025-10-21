@@ -8,7 +8,6 @@ import type {
 	CreateRecordingPayload,
 	UploadAudioPayload,
 	RecordingFilters,
-	RecordingStats,
 	AnalysisResult,
 } from '@/types/recording.types'
 
@@ -78,6 +77,19 @@ class RecordingService {
 		if (payload.postureFeatures) {
 			formData.append('postureFeatures', JSON.stringify(payload.postureFeatures))
 		}
+
+		if (payload.publicId) {
+			formData.append('publicId', payload.publicId);
+		}
+
+		if (payload.secureUrl) {
+			formData.append('secureUrl', payload.secureUrl);
+		}
+
+		if (payload.videoFileSize) {
+			formData.append('videoFileSize', payload.videoFileSize.toString());
+		}
+
 		console.log("Uploading posture features: ", formData);
 		const response = await apiService.uploadFile<RecordingResponse>(
 			`${this.BASE_PATH}/${recordingId}/upload`,
@@ -131,21 +143,6 @@ class RecordingService {
 		return response.recordings
 	}
 
-	// Get recordings by domain
-	async getRecordingsByDomain(domain: string): Promise<Recording[]> {
-		return this.getUserRecordings({ domain })
-	}
-
-	// Get recordings by status
-	async getRecordingsByStatus(status: Recording['status']): Promise<Recording[]> {
-		return this.getUserRecordings({ status })
-	}
-
-	// Get user recording statistics
-	async getRecordingStats(): Promise<RecordingStats> {
-		return apiService.get<RecordingStats>(`${this.BASE_PATH}/stats`, true)
-	}
-
 	// Retry failed recording processing
 	async retryRecording(recordingId: string): Promise<Recording> {
 		const response = await apiService.post<RecordingResponse>(
@@ -171,37 +168,6 @@ class RecordingService {
 		if (!response.success) {
 			throw new Error(response.message || 'Failed to delete recording')
 		}
-	}
-
-	// Cancel ongoing recording
-	async cancelRecording(recordingId: string): Promise<void> {
-		const response = await apiService.post<RecordingResponse>(
-			`${this.BASE_PATH}/${recordingId}/cancel`,
-			undefined,
-			true
-		)
-
-		if (!response.success) {
-			throw new Error(response.message || 'Failed to cancel recording')
-		}
-	}
-
-	// Download recording audio file
-	async downloadRecording(recordingId: string): Promise<Blob> {
-		const response = await fetch(
-			`${apiService['baseURL']}${this.BASE_PATH}/${recordingId}/download`,
-			{
-				headers: {
-					Authorization: `Bearer ${await apiService['getValidAccessToken']()}`,
-				},
-			}
-		)
-
-		if (!response.ok) {
-			throw new Error('Failed to download recording')
-		}
-
-		return response.blob()
 	}
 
 	// Get recording analysis details
