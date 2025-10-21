@@ -12,14 +12,14 @@ import { ApiError } from 'next/dist/server/api-utils';
 
 const Register = () => {
 	const [formData, setFormData] = useState({
-		username: '',
+		name: '',
 		email: '',
 		password: '',
 		confirmPassword: '',
 	});
 
 	const { email } = formData;
-	const { user, signup, isLoading, error } = useAuth();
+	const { signup, isLoading, error, setError } = useAuth();
 
 	const [showPassword, setShowPassword] = React.useState(false);
 	const [showCPassword, setShowCPassword] = React.useState(false);
@@ -52,7 +52,7 @@ const Register = () => {
 		console.log("handleSendOTP called");
 		e.preventDefault();
 
-		if (!formData.email || !formData.password || !formData.username) {
+		if (!formData.email || !formData.password || !formData.name) {
 			toast.warn('Please fill all fields correctly.');
 			return;
 		}
@@ -73,7 +73,7 @@ const Register = () => {
 		}
 
 		try {
-			await signup({ email: formData.email, password: formData.password });
+			await signup({ name: formData.name, email: formData.email, password: formData.password });
 
 			if (error) {
 				throw new Error(error);
@@ -89,6 +89,8 @@ const Register = () => {
 		} catch (err: ApiError | any) {
 			console.error("Error during registration or sending OTP:", err);
 			toast.error(err.message || 'An error occurred while registering. Please try again.');
+		} finally {
+			setError(null);
 		}
 	};
 
@@ -109,6 +111,7 @@ const Register = () => {
 			console.log("OTP verification response:", response);
 
 			if (response.success) {
+				toast.success('OTP verified! Redirecting to login...');
 				router.push('/auth/login');
 			} else {
 				toast.error(error || 'OTP verification failed.');
@@ -139,11 +142,11 @@ const Register = () => {
 							<Form onSubmit={handleSendOTP}>
 								<div className='flex flex-col gap-4 w-full'>
 									<Input
-										placeholder='Username'
+										placeholder='Name'
 										variant='faded'
 										startContent={<FaRegUser className='text-muted' />}
-										value={formData.username}
-										onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+										value={formData.name}
+										onChange={(e) => setFormData({ ...formData, name: e.target.value })}
 									/>
 									<Input
 										placeholder='Email'

@@ -57,7 +57,7 @@ const Login = () => {
 
 		try {
 			await login({ email, password });
-			toast.success('Login successful! Please check your email for the OTP code.');
+			toast.success('Logged in successful!');
 			router.push('/');
 		} catch (err) {
 			console.error('Login error:', err);
@@ -66,7 +66,7 @@ const Login = () => {
 				setStep('otp');
 			}
 			else {
-				toast.error(err.message || 'Login failed. Please try again.');
+				toast.error(err?.message || 'Login failed. Please try again.');
 			}
 		}
 	};
