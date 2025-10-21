@@ -12,6 +12,9 @@ import type { Recording, RecordingAnalysis } from "@/types/recording.types";
 import { FaDownload } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { changeCategoryCase } from "@/utils/process.utils";
+import { toast } from "react-toastify";
+import { FcVideoCall } from "react-icons/fc";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface ReportProps {
 	id: string;
@@ -23,7 +26,9 @@ const Report = ({ id }: ReportProps) => {
 	const [error, setError] = useState<string | null>(null);
 	const [recording, setRecording] = useState<Recording | null>(null);
 	const [analysisData, setAnalysisData] = useState<RecordingAnalysis | null>(null);
+	const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
 	const reportRef = useRef<HTMLDivElement>(null);
+	const { theme } = useTheme();
 
 	useEffect(() => {
 		loadAnalysis();
@@ -35,7 +40,6 @@ const Report = ({ id }: ReportProps) => {
 		setError(null);
 
 		try {
-			// Fetch recording with analysis
 			const result = await recordingService.getRecording(id);
 
 			if (!result.success) {
@@ -44,7 +48,6 @@ const Report = ({ id }: ReportProps) => {
 
 			if (result.status === 'processing') {
 				setError('Analysis is still being processed. Please check back in a moment.');
-				// Optionally, you could poll here
 				setTimeout(loadAnalysis, 5000);
 				return;
 			}
@@ -55,7 +58,6 @@ const Report = ({ id }: ReportProps) => {
 
 			setAnalysisData(result);
 
-			// Also fetch full recording details if needed
 			const recordings = await recordingService.getUserRecordings();
 			const recordingDetail = recordings.find(r => r.id === id);
 			if (recordingDetail) {
@@ -71,43 +73,175 @@ const Report = ({ id }: ReportProps) => {
 		}
 	};
 
+
+	// Util to expand all scrollable/overflow/width-constrained nodes recursively
+	function expandAll(container: HTMLElement, originalStyles: Array<any>) {
+		// Properties to override
+		const props = ['overflow', 'overflowX', 'overflowY', 'maxHeight', 'height', 'maxWidth', 'width'];
+		// Find all descendants
+		container.querySelectorAll('.scrollable').forEach(el => {
+			const node = el as HTMLElement;
+			// Save original styles
+			originalStyles.push({
+				element: node,
+				overflow: node.style.overflow,
+				overflowX: node.style.overflowX,
+				overflowY: node.style.overflowY,
+				maxHeight: node.style.maxHeight,
+				height: node.style.height,
+				width: node.style.width,
+				maxWidth: node.style.maxWidth
+			});
+			// Remove overflow and sizing for all nodes
+			node.style.overflow = 'visible';
+			node.style.overflowX = 'visible';
+			node.style.overflowY = 'visible';
+			node.style.maxHeight = 'none';
+			node.style.maxWidth = 'none';
+			node.style.height = 'auto';
+			node.style.width = 'auto';
+		});
+	}
+
+
 	const handleDownloadPDF = async () => {
-		if (!reportRef.current) return;
+		if (!reportRef.current || isDownloadingPDF) return;
 
+		setIsDownloadingPDF(true);
 		try {
-			// Dynamically import html2pdf to avoid SSR issues
-			const html2pdf = (await import('html2pdf.js')).default;
+			const jsPDF = (await import('jspdf')).default;
+			const htmlToImage = await import('html-to-image');
 
-			html2pdf()
-				.from(reportRef.current)
-				.set({
-					margin: 0.5,
-					filename: `Report-${id}.pdf`,
-					image: { type: "jpeg", quality: 0.98 },
-					html2canvas: { scale: 2 },
-					jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
-				})
-				.save();
+			const element = reportRef.current;
+
+			// Hide all elements with .no-print
+			const noPrintEls = element.querySelectorAll('.no-print');
+			noPrintEls.forEach((el) => (el as HTMLElement).style.display = 'none');
+
+			// Remove all scrollbars/maxHeight restrictions
+			const originalStyles: Array<{ element: Element; overflow: string; maxHeight: string; height: string; overflowX: string; overflowY: string; width: string; maxWidth: string }> = [];
+			expandAll(element, originalStyles);
+
+			// Detect theme
+			const isDark = theme === 'dark';
+			const bgColor = isDark ? '#2A2A2A' : '#F5F4F3';
+
+			// Generate image, filter out .no-print elements
+			const canvas = await htmlToImage.toCanvas(element, {
+				cacheBust: true,
+				backgroundColor: bgColor,
+				filter: (node) => !(node instanceof Element && node.classList.contains('no-print'))
+			});
+			const canvasDataUrl = await htmlToImage.toPng(element, {
+				cacheBust: true,
+				backgroundColor: bgColor,
+				filter: (node) => !(node instanceof Element && node.classList.contains('no-print'))
+			});
+
+			// Restore styles
+			originalStyles.forEach(({ element, overflow, overflowX, overflowY, maxHeight, height, width, maxWidth }) => {
+				const htmlEl = element as HTMLElement;
+				htmlEl.style.overflow = overflow;
+				htmlEl.style.overflowX = overflowX;
+				htmlEl.style.overflowY = overflowY;
+				htmlEl.style.maxHeight = maxHeight;
+				htmlEl.style.maxWidth = maxWidth;
+				htmlEl.style.height = height;
+				htmlEl.style.width = width;
+			});
+			noPrintEls.forEach((el) => (el as HTMLElement).style.display = '');
+
+			// PDF: Full-image, scaled to fit paper (no multipage logic needed)
+			const pdf = new jsPDF({
+				orientation: 'portrait',
+				unit: 'mm',
+				format: 'a4'
+			});
+
+			const pdfWidth = pdf.internal.pageSize.getWidth();
+			const pdfHeight = pdf.internal.pageSize.getHeight();
+
+			pdf.addImage(
+				canvasDataUrl,
+				'PNG',
+				0,
+				0,
+				pdfWidth,
+				pdfHeight
+			);
+
+			// Save PDF
+			const date = new Date().toISOString().split('T')[0];
+			const filename = `Report_${recording?.domain || 'Recording'}_${date}.pdf`;
+			pdf.save(filename);
+
 		} catch (err) {
 			console.error("Failed to download PDF:", err);
-			setError("Failed to download PDF. Please try again.");
+		} finally {
+			setIsDownloadingPDF(false);
 		}
 	};
 
-	const handleDownloadAudio = async () => {
+
+
+	const requestDownloadPDF = async () => {
+		await toast.promise(
+			new Promise<void>(async (resolve, reject) => {
+				try {
+					setIsDownloadingPDF(true);
+					await handleDownloadPDF();
+					resolve();
+				} catch (err) {
+					reject(err);
+				}
+			}),
+			{
+				pending: 'Generating PDF...',
+				success: 'PDF generated successfully!',
+				error: 'Failed to generate PDF.'
+			},
+			{
+				autoClose: 5000
+			}
+		);
+	};
+
+	const handleDownloadVideo = async () => {
 		try {
-			const blob = await recordingService.downloadRecording(id);
-			const url = URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.href = url;
-			a.download = `recording-${id}.webm`;
-			document.body.appendChild(a);
-			a.click();
-			document.body.removeChild(a);
-			URL.revokeObjectURL(url);
-		} catch (err: any) {
-			console.error("Failed to download audio:", err);
-			setError(err.message || "Failed to download audio");
+
+			if (!recording?.audioFilePath) {
+				toast.error("No video file available for download");
+				return;
+			}
+
+			await toast.promise(
+				(async () => {
+					// Fetch the video from Cloudinary
+					const response = await fetch(recording.audioFilePath);
+					const blob = await response.blob();
+
+					// Create download link
+					const url = URL.createObjectURL(blob);
+					const a = document.createElement('a');
+					a.href = url;
+					a.download = `recording-${recording.domain}-${new Date().toISOString().split('T')[0]}.webm`;
+					document.body.appendChild(a);
+					a.click();
+					document.body.removeChild(a);
+					URL.revokeObjectURL(url);
+				}),
+				{
+					pending: 'Downloading video...',
+					success: 'Video downloaded successfully!',
+					error: 'Failed to download video.'
+				},
+				{
+					autoClose: 5000
+				}
+			);
+		} catch (err) {
+			console.error("Video download error:", err);
+			toast.error("Failed to download video");
 		}
 	};
 
@@ -115,7 +249,7 @@ const Report = ({ id }: ReportProps) => {
 		return (
 			<div className="flex flex-col items-center justify-center h-screen gap-4">
 				<Spinner size="lg" color="primary" />
-				<p className="text-muted">Loading analysis...</p>
+				<p className="text-foreground/70">Loading analysis...</p>
 			</div>
 		);
 	}
@@ -126,7 +260,7 @@ const Report = ({ id }: ReportProps) => {
 				<div className="text-center max-w-md">
 					<div className="text-6xl mb-4">⚠️</div>
 					<h2 className="text-2xl font-bold text-red-600 mb-2">Error</h2>
-					<p className="text-muted mb-4">{error}</p>
+					<p className="text-foreground/70 mb-4">{error}</p>
 					<div className="flex gap-3 justify-center">
 						<Button
 							onClick={loadAnalysis}
@@ -152,7 +286,7 @@ const Report = ({ id }: ReportProps) => {
 				<div className="text-center max-w-md">
 					<div className="text-6xl mb-4">📊</div>
 					<h2 className="text-2xl font-bold text-text mb-2">No Analysis Available</h2>
-					<p className="text-muted mb-4">Analysis data is not available for this recording.</p>
+					<p className="text-foreground/70 mb-4">Analysis data is not available for this recording.</p>
 					<Button
 						onClick={() => router.push('/history')}
 						className="bg-primary text-white hover:bg-primary-hover"
@@ -164,12 +298,11 @@ const Report = ({ id }: ReportProps) => {
 		);
 	}
 
-	// Extract analysis data with type safety
-	const data = analysisData.analysis as any; // Type this properly based on your analysis structure
+	const data = analysisData.analysis as any;
 
 	return (
-		<div className="relative font-lato mx-auto px-8 py-10">
-			<div ref={reportRef} className="flex flex-col gap-10">
+		<div className="relative font-lato mx-auto">
+			<div ref={reportRef} className="flex flex-col gap-10 p-10">
 				{/* Header Card */}
 				<Card className="flex flex-row items-center justify-between bg-card w-full p-5">
 					<div className="flex flex-col">
@@ -177,35 +310,37 @@ const Report = ({ id }: ReportProps) => {
 							<span className="font-medium">Category: </span>
 							{changeCategoryCase(recording?.domain) || changeCategoryCase(data.info?.category) || 'N/A'}
 						</h2>
-						<p className="text-muted">
+						<p className="text-foreground/80">
 							Report generated on: {recording?.createdAt
 								? new Date(recording.createdAt).toDateString()
 								: new Date().toDateString()
 							}
 						</p>
 						{recording && (
-							<p className="text-muted text-sm mt-1">
+							<p className="text-foreground/80 text-sm mt-1">
 								Duration: {Math.floor(recording.duration / 60)}m {recording.duration % 60}s
 							</p>
 						)}
 					</div>
-					<div className="flex gap-2">
+					<div className="flex gap-2 no-print">
 						<Button
-							onClick={handleDownloadAudio}
+							onClick={handleDownloadVideo}
 							isIconOnly={true}
 							variant="bordered"
 							className="w-12 h-12 text-primary hover:bg-primary/10"
-							title="Download Audio"
+							title="Download Video"
 						>
-							🎵
+							<FcVideoCall className="size-6" />
 						</Button>
 						<Button
-							onClick={handleDownloadPDF}
+							onClick={requestDownloadPDF}
 							isIconOnly={true}
+							isLoading={isDownloadingPDF}
+							disabled={isDownloadingPDF}
 							className="active-sidebar-btn w-12 h-12 text-primary hover:bg-primary-dark"
 							title="Download PDF"
 						>
-							<FaDownload className="size-5" />
+							{!isDownloadingPDF && <FaDownload className="size-5" />}
 						</Button>
 					</div>
 				</Card>
@@ -214,38 +349,20 @@ const Report = ({ id }: ReportProps) => {
 				<div className="flex items-start justify-between">
 					<ScoreCard percent={data.overall_score || 0} />
 					<div className="flex flex-wrap justify-end gap-5">
-						<Meter
-							type="fluency"
-							score={data.fluency_evaluator?.fluency_score || 0}
-						/>
-						<Meter
-							type="clarity"
-							score={data.speech_evaluator?.clarity_score || 0}
-						/>
-						<Meter
-							type="grammar"
-							score={data.language_evaluator?.grammar_score || 0}
-						/>
-						<Meter
-							type="confidence"
-							score={data.speech_evaluator?.confidence_score || 0}
-						/>
-						<Meter
-							type="posture"
-							score={data.posture_evaluator?.score || 0}
-						/>
-						<Meter
-							type="structure"
-							score={data.language_evaluator?.structure_score || 0}
-						/>
+						<Meter type="fluency" score={data.fluency_evaluator?.fluency_score || 0} />
+						<Meter type="clarity" score={data.speech_evaluator?.clarity_score || 0} />
+						<Meter type="grammar" score={data.language_evaluator?.grammar_score || 0} />
+						<Meter type="confidence" score={data.speech_evaluator?.confidence_score || 0} />
+						<Meter type="posture" score={data.posture_evaluator?.score || 0} />
+						<Meter type="structure" score={data.language_evaluator?.structure_score || 0} />
 					</div>
 				</div>
 
 				{/* Summary & WPM */}
-				<div className="flex gap-5">
-					<Card className="w-full bg-card h-80 overflow-auto p-5">
+				<div className="flex gap-5 flex-wrap scrollable">
+					<Card className="flex-1 min-w-[300px] bg-card max-h-80 overflow-auto p-5 scrollable">
 						<CardHeader className="font-medium text-lg">Transcript</CardHeader>
-						<CardBody>
+						<CardBody className="scrollable">
 							<p className="text-base text-text whitespace-pre-wrap">
 								{data.transcript || 'No transcript available'}
 							</p>
@@ -255,14 +372,14 @@ const Report = ({ id }: ReportProps) => {
 				</div>
 
 				{/* Evaluation Section */}
-				<div className="flex gap-5">
-					<ScrollDiv heading="Fluency Evaluation" className="w-1/2">
+				<div className="flex gap-5 flex-wrap">
+					<ScrollDiv heading="Fluency Evaluation" className="flex-1 min-w-[300px] scrollable">
 						<p>{data.fluency_evaluator?.comment || 'No fluency evaluation available'}</p>
 					</ScrollDiv>
 
-					<ScrollDiv heading="Posture Evaluation" className="w-1/2">
+					<ScrollDiv heading="Posture Evaluation" className="flex-1 min-w-[300px] scrollable">
 						{data.posture_evaluator?.tips && data.posture_evaluator.tips.length > 0 ? (
-							<ul>
+							<ul className="space-y-2">
 								{data.posture_evaluator.tips.map((point: string, index: number) => (
 									<li key={index} className="list-disc list-inside">{point}</li>
 								))}
@@ -274,42 +391,45 @@ const Report = ({ id }: ReportProps) => {
 				</div>
 
 				{/* Language Coach */}
-				<Card className="bg-card w-full h-96 overflow-auto p-5">
+				<Card className={`flex-1 w-fit min-w-[300px] bg-card p-5 scrollable ${isDownloadingPDF ? "" : "max-h-96 overflow-auto"
+					}`}>
 					<CardHeader className="font-medium text-lg">Language Coach</CardHeader>
-					<CardBody className="grid grid-cols-2 gap-5">
-						<Card className="flex flex-col p-3 bg-success shadow-sm">
+					<CardBody className="grid grid-cols-1 md:grid-cols-2 gap-5 scrollable">
+						<Card className="flex flex-col p-3 bg-success shadow-sm scrollable">
 							<CardHeader>
 								<h4 className="font-medium text-lg text-success">What went well</h4>
 							</CardHeader>
-							<CardBody>
+							<CardBody className="scrollable">
 								{data.language_evaluator?.strengths && data.language_evaluator.strengths.length > 0 ? (
-									<ul className="list-disc list-inside">
+									<ul className="space-y-2">
 										{data.language_evaluator.strengths.map((t: any, i: number) => (
-											<li key={i} className="list-none">
-												🟢 {t}
+											<li key={i} className="flex items-start gap-2">
+												<span className="text-green-500">🟢</span>
+												<span>{t}</span>
 											</li>
 										))}
 									</ul>
 								) : (
-									<p className="text-muted">No strengths recorded</p>
+									<p className="text-foreground/70">No strengths recorded</p>
 								)}
 							</CardBody>
 						</Card>
-						<Card className="flex flex-col p-3 bg-error shadow-sm">
+						<Card className="flex flex-col p-3 bg-error shadow-sm scrollable">
 							<CardHeader>
 								<h4 className="font-medium text-lg text-error">Areas of improvement</h4>
 							</CardHeader>
-							<CardBody>
+							<CardBody className="scrollable">
 								{data.language_evaluator?.improvements && data.language_evaluator.improvements.length > 0 ? (
-									<ul className="list-disc list-inside">
+									<ul className="space-y-2">
 										{data.language_evaluator.improvements.map((t: any, i: number) => (
-											<li key={i} className="list-none">
-												🔴 {t}
+											<li key={i} className="flex items-start gap-2">
+												<span className="text-red-500">🔴</span>
+												<span>{t}</span>
 											</li>
 										))}
 									</ul>
 								) : (
-									<p className="text-muted">No improvements noted</p>
+									<p className="text-foreground/70">No improvements noted</p>
 								)}
 							</CardBody>
 						</Card>
@@ -317,65 +437,68 @@ const Report = ({ id }: ReportProps) => {
 				</Card>
 
 				{/* Speech Evaluator */}
-				<Card className="bg-card w-full h-96 overflow-auto p-5">
+				<Card className={`flex-1 w-fit min-w-[300px] bg-card p-5 scrollable ${isDownloadingPDF ? "" : "max-h-96 overflow-auto"
+					}`}>
 					<CardHeader className="font-medium text-lg">Speech Evaluator</CardHeader>
-					<CardBody className="grid grid-cols-2 gap-5">
-						<Card className="flex flex-col p-3 bg-success shadow-sm">
+					<CardBody className="grid grid-cols-1 md:grid-cols-2 gap-5 scrollable">
+						<Card className="flex flex-col p-3 bg-success shadow-sm scrollable">
 							<CardHeader>
 								<h4 className="font-medium text-lg text-success">What went well</h4>
 							</CardHeader>
-							<CardBody>
+							<CardBody className="scrollable">
 								{data.speech_evaluator?.strengths && data.speech_evaluator.strengths.length > 0 ? (
-									<ul className="list-disc list-inside">
+									<ul className="space-y-2">
 										{data.speech_evaluator.strengths.map((t: any, i: number) => (
-											<li key={i} className="list-none">
-												🟢 {t}
+											<li key={i} className="flex items-start gap-2">
+												<span className="text-green-500">🟢</span>
+												<span>{t}</span>
 											</li>
 										))}
 									</ul>
 								) : (
-									<p className="text-muted">No strengths recorded</p>
+									<p className="text-foreground/70">No strengths recorded</p>
 								)}
 							</CardBody>
 						</Card>
-						<Card className="flex flex-col p-3 bg-error shadow-sm">
+						<Card className="flex flex-col p-3 bg-error shadow-sm scrollable">
 							<CardHeader>
 								<h4 className="font-medium text-lg text-error">Areas of improvement</h4>
 							</CardHeader>
-							<CardBody>
+							<CardBody className="scrollable">
 								{data.speech_evaluator?.improvements && data.speech_evaluator.improvements.length > 0 ? (
-									<ul className="list-disc list-inside">
+									<ul className="space-y-2">
 										{data.speech_evaluator.improvements.map((t: any, i: number) => (
-											<li key={i} className="list-none">
-												🔴 {t}
+											<li key={i} className="flex items-start gap-2">
+												<span className="text-red-500">🔴</span>
+												<span>{t}</span>
 											</li>
 										))}
 									</ul>
 								) : (
-									<p className="text-muted">No improvements noted</p>
+									<p className="text-foreground/70">No improvements noted</p>
 								)}
 							</CardBody>
 						</Card>
 					</CardBody>
 				</Card>
 
-				{/* Recording Metadata (Optional) */}
+				{/* Recording Metadata */}
 				{recording && (
-					<Card className="bg-card w-full p-5">
+					<Card className="bg-card w-full p-5 scrollable">
 						<CardHeader className="font-medium text-lg">Recording Details</CardHeader>
-						<CardBody className="grid grid-cols-3 gap-4 text-sm">
+						<CardBody className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm scrollable">
 							<div>
-								<p className="text-muted">Status</p>
+								<p className="text-foreground/70">Status</p>
 								<p className="font-semibold capitalize">{recording.status}</p>
 							</div>
 							<div>
-								<p className="text-muted">Recorded On</p>
+								<p className="text-foreground/70">Recorded On</p>
 								<p className="font-semibold">
 									{new Date(recording.createdAt).toLocaleString()}
 								</p>
 							</div>
 							<div>
-								<p className="text-muted">File Size</p>
+								<p className="text-foreground/70">File Size</p>
 								<p className="font-semibold">
 									{recording.audioFileSize
 										? `${(recording.audioFileSize / 1024 / 1024).toFixed(2)} MB`
