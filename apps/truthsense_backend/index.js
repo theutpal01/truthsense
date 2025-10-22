@@ -23,7 +23,18 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      "upgrade-insecure-requests": null
+    }
+  },
+  hsts: process.env.NODE_ENV === 'production'
+}));
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
     ? ['https://truthsense.com', 'https://www.truthsense.com']
