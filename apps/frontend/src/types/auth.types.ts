@@ -8,6 +8,34 @@ export interface User {
 }
 
 
+export interface AuthContextType {
+	user: User | null
+	token: string | null
+	isLoading: boolean
+	error: string | null
+	isHydrated: boolean
+
+	// Auth methods
+	login: (credentials: LoginCredentials) => Promise<void>
+	signup: (credentials: SignupCredentials) => Promise<void>
+	logout: () => Promise<void>
+
+	// OTP methods
+	sendOTP: (email: string) => Promise<void>
+	verifyOTP: (email: string, code: string) => Promise<{ success: boolean }>
+
+	refreshUser: () => Promise<void>
+
+	// Password methods
+	changePassword: (data: PasswordResetConfirm) => Promise<void>
+	requestPasswordReset: (email: string) => Promise<void>
+
+	// Error handling
+	setError: (error: string | null) => void
+	clearError: () => void
+}
+
+
 export interface AuthTokens {
 	access: string;
 	refresh: string;
@@ -44,6 +72,22 @@ export interface AuthResponse {
 	success: boolean;
 	error?: string;
 	message?: string;
+}
+
+export interface PasswordResetRequest {
+	email: string;
+}
+
+export interface PasswordResetConfirm {
+	email: string;
+	code: string;
+	newPassword: string;
+}
+
+export interface PasswordResetResponse {
+	success: boolean;
+	message?: string;
+	error?: string;
 }
 
 export interface ApiError {

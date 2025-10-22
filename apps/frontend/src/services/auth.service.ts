@@ -1,4 +1,4 @@
-import { AuthResponse, LoginCredentials, OTPVerificationResponse, RegisterResponse, SignupCredentials, User } from "@/types/auth.types"
+import { AuthResponse, LoginCredentials, OTPVerificationResponse, PasswordResetResponse, RegisterResponse, SignupCredentials, User } from "@/types/auth.types"
 import { apiService } from "@/services/api.service"
 import { STORAGE_KEYS, storageService } from "@/utils/storage.utils"
 import { tokenManager } from "@/utils/token.utils"
@@ -84,47 +84,46 @@ class AuthService {
 		return response
 	}
 
-	// Resend OTP
-	async resendOTP(email: string): Promise<void> {
-		await apiService.post('/auth/otp/resend/', { email }, false)
+	// Forgot password api
+	async requestPasswordReset(email: string): Promise<PasswordResetResponse> {
+		const res = await apiService.post<PasswordResetResponse>('/auth/forgot-password/', { email }, false)
+		if (res.success) {
+			return res
+		} else {
+			throw new Error(res.error || 'Failed to request password reset')
+		}
 	}
+
+	// Reset password
+	async changePassword({ email, code, password }: { email: string; code: string; password: string }): Promise<PasswordResetResponse> {
+		const res = await apiService.post<PasswordResetResponse>(
+			'/auth/reset-password/',
+			{ email, code, newPassword: password },
+			false
+		)
+		if (!res.success) {
+			throw new Error(res.error || 'Failed to reset password')
+		}
+		// Password reset successful
+		return res;
+
+	}
+
 
 	// Get current user profile
 	async getCurrentUser(): Promise<User> {
-		const user = await apiService.get<User>('/auth/user/', true)
-		storageService.setJSON(STORAGE_KEYS.USER_DATA, user)
-		return user
+		const user = await apiService.get<User>('/auth/profile/', true);
+		storageService.setJSON(STORAGE_KEYS.USER_DATA, user);
+		return user;
 	}
 
-	// Update user profile
-	async updateProfile(data: Partial<User>): Promise<User> {
-		const user = await apiService.patch<User>('/auth/user/', data, true)
-		storageService.setJSON(STORAGE_KEYS.USER_DATA, user)
-		return user
-	}
+	// // Update user profile
+	// async updateProfile(data: Partial<User>): Promise<User> {
+	// 	const user = await apiService.patch<User>('/auth/profile/', data, true)
+	// 	storageService.setJSON(STORAGE_KEYS.USER_DATA, user)
+	// 	return user
+	// }
 
-	// Change password
-	async changePassword(oldPassword: string, newPassword: string): Promise<void> {
-		await apiService.post(
-			'/auth/password/change/',
-			{ old_password: oldPassword, new_password: newPassword },
-			true
-		)
-	}
-
-	// Request password reset
-	async requestPasswordReset(email: string): Promise<void> {
-		await apiService.post('/auth/password/reset/', { email }, false)
-	}
-
-	// Confirm password reset with token
-	async confirmPasswordReset(token: string, newPassword: string): Promise<void> {
-		await apiService.post(
-			'/auth/password/reset/confirm/',
-			{ token, new_password: newPassword },
-			false
-		)
-	}
 
 	// Logout user
 	async logout(): Promise<void> {
@@ -140,16 +139,6 @@ class AuthService {
 			storageService.clear()
 			this.clearAuthCookies()
 		}
-	}
-
-	// Verify email with token
-	async verifyEmail(token: string): Promise<void> {
-		await apiService.post('/auth/email/verify/', { token }, false)
-	}
-
-	// Resend email verification
-	async resendEmailVerification(): Promise<void> {
-		await apiService.post('/auth/email/resend/', {}, true)
 	}
 
 	// Check if user is authenticated

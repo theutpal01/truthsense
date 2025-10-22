@@ -151,6 +151,10 @@ const Login = () => {
 												}
 											</button>}
 									/>
+
+									<p className='text-text font-inter text-xs'>
+										Forgot your password? <Link href='/auth/reset' className='text-primary font-semibold text-xs'>Reset it</Link>
+									</p>
 								</div>
 
 								<Button

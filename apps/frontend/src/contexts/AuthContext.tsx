@@ -1,44 +1,9 @@
 "use client"
 
 import { authService } from "@/services/auth.service"
-import { LoginCredentials, SignupCredentials, User } from "@/types/auth.types"
+import { AuthContextType, LoginCredentials, PasswordResetConfirm, SignupCredentials, User } from "@/types/auth.types"
 import { tokenManager } from "@/utils/token.utils"
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from "react"
-
-interface AuthContextType {
-	user: User | null
-	token: string | null
-	isLoading: boolean
-	error: string | null
-	isHydrated: boolean
-
-	// Auth methods
-	login: (credentials: LoginCredentials) => Promise<void>
-	signup: (credentials: SignupCredentials) => Promise<void>
-	logout: () => Promise<void>
-
-	// OTP methods
-	sendOTP: (email: string) => Promise<void>
-	verifyOTP: (email: string, code: string) => Promise<{ success: boolean }>
-	resendOTP: (email: string) => Promise<void>
-
-	// Profile methods
-	updateProfile: (data: Partial<User>) => Promise<void>
-	refreshUser: () => Promise<void>
-
-	// Password methods
-	changePassword: (oldPassword: string, newPassword: string) => Promise<void>
-	requestPasswordReset: (email: string) => Promise<void>
-	confirmPasswordReset: (token: string, newPassword: string) => Promise<void>
-
-	// Email verification
-	verifyEmail: (token: string) => Promise<void>
-	resendEmailVerification: () => Promise<void>
-
-	// Error handling
-	setError: (error: string | null) => void
-	clearError: () => void
-}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
@@ -173,38 +138,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 		}
 	}, [])
 
-	// Resend OTP
-	const resendOTP = useCallback(async (email: string) => {
-		setIsLoading(true)
-		setError(null)
+	// // Resend OTP
+	// const resendOTP = useCallback(async (email: string) => {
+	// 	setIsLoading(true)
+	// 	setError(null)
 
-		try {
-			await authService.resendOTP(email)
-		} catch (err: any) {
-			const errorMessage = err?.message || 'Failed to resend OTP'
-			setError(errorMessage)
-			throw err
-		} finally {
-			setIsLoading(false)
-		}
-	}, [])
+	// 	try {
+	// 		await authService.resendOTP(email)
+	// 	} catch (err: any) {
+	// 		const errorMessage = err?.message || 'Failed to resend OTP'
+	// 		setError(errorMessage)
+	// 		throw err
+	// 	} finally {
+	// 		setIsLoading(false)
+	// 	}
+	// }, [])
 
-	// Update user profile
-	const updateProfile = useCallback(async (data: Partial<User>) => {
-		setIsLoading(true)
-		setError(null)
+	// // Update user profile
+	// const updateProfile = useCallback(async (data: Partial<User>) => {
+	// 	setIsLoading(true)
+	// 	setError(null)
 
-		try {
-			const updatedUser = await authService.updateProfile(data)
-			setUser(updatedUser)
-		} catch (err: any) {
-			const errorMessage = err?.message || 'Failed to update profile'
-			setError(errorMessage)
-			throw err
-		} finally {
-			setIsLoading(false)
-		}
-	}, [])
+	// 	try {
+	// 		const updatedUser = await authService.updateProfile(data)
+	// 		setUser(updatedUser)
+	// 	} catch (err: any) {
+	// 		const errorMessage = err?.message || 'Failed to update profile'
+	// 		setError(errorMessage)
+	// 		throw err
+	// 	} finally {
+	// 		setIsLoading(false)
+	// 	}
+	// }, [])
 
 	// Refresh user data
 	const refreshUser = useCallback(async () => {
@@ -217,12 +182,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 	}, [])
 
 	// Change password
-	const changePassword = useCallback(async (oldPassword: string, newPassword: string) => {
+	const changePassword = useCallback(async (data: PasswordResetConfirm) => {
 		setIsLoading(true)
 		setError(null)
 
 		try {
-			await authService.changePassword(oldPassword, newPassword)
+			await authService.changePassword({ email: data.email, code: data.code, password: data.newPassword });
 		} catch (err: any) {
 			const errorMessage = err?.message || 'Failed to change password'
 			setError(errorMessage)
@@ -248,55 +213,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 		}
 	}, [])
 
-	// Confirm password reset
-	const confirmPasswordReset = useCallback(async (token: string, newPassword: string) => {
-		setIsLoading(true)
-		setError(null)
-
-		try {
-			await authService.confirmPasswordReset(token, newPassword)
-		} catch (err: any) {
-			const errorMessage = err?.message || 'Failed to reset password'
-			setError(errorMessage)
-			throw err
-		} finally {
-			setIsLoading(false)
-		}
-	}, [])
-
-	// Verify email
-	const verifyEmail = useCallback(async (token: string) => {
-		setIsLoading(true)
-		setError(null)
-
-		try {
-			await authService.verifyEmail(token)
-			await refreshUser()
-		} catch (err: any) {
-			const errorMessage = err?.message || 'Failed to verify email'
-			setError(errorMessage)
-			throw err
-		} finally {
-			setIsLoading(false)
-		}
-	}, [refreshUser])
-
-	// Resend email verification
-	const resendEmailVerification = useCallback(async () => {
-		setIsLoading(true)
-		setError(null)
-
-		try {
-			await authService.resendEmailVerification()
-		} catch (err: any) {
-			const errorMessage = err?.message || 'Failed to resend verification email'
-			setError(errorMessage)
-			throw err
-		} finally {
-			setIsLoading(false)
-		}
-	}, [])
-
 	// Clear error
 	const clearError = useCallback(() => {
 		setError(null)
@@ -313,14 +229,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 		logout,
 		sendOTP,
 		verifyOTP,
-		resendOTP,
-		updateProfile,
 		refreshUser,
 		changePassword,
 		requestPasswordReset,
-		confirmPasswordReset,
-		verifyEmail,
-		resendEmailVerification,
 		setError,
 		clearError,
 	}
