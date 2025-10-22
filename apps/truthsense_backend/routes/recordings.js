@@ -26,6 +26,9 @@ const router = express.Router();
  *         id:
  *           type: string
  *           format: uuid
+ *         publicId:
+ *           type: string
+ *           description: Cloudinary public ID for the video
  *         domain:
  *           type: string
  *           enum: [interview, speech, presentation, lecture, briefing, conference_talk, monologue]
@@ -165,7 +168,7 @@ router.post('/:recordingId/stop', authenticateToken, recordingController.stopRec
  * @swagger
  * /api/recordings/{recordingId}/upload:
  *   post:
- *     summary: Upload audio file and posture features
+ *     summary: Upload audio file, posture features, and video metadata
  *     tags: [Recordings]
  *     security:
  *       - bearerAuth: []
@@ -185,6 +188,9 @@ router.post('/:recordingId/stop', authenticateToken, recordingController.stopRec
  *             required:
  *               - audioFile
  *               - postureFeatures
+ *               - secureUrl
+ *               - publicId
+ *               - videoFileSize
  *             properties:
  *               audioFile:
  *                 type: string
@@ -193,6 +199,15 @@ router.post('/:recordingId/stop', authenticateToken, recordingController.stopRec
  *               postureFeatures:
  *                 type: string
  *                 description: JSON string containing posture analysis data
+ *               secureUrl:
+ *                 type: string
+ *                 description: Cloudinary secure URL for the video
+ *               publicId:
+ *                 type: string
+ *                 description: Cloudinary public ID for the video
+ *               videoFileSize:
+ *                 type: number
+ *                 description: Video file size in bytes
  *     responses:
  *       200:
  *         description: File uploaded successfully, processing started

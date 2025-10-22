@@ -145,14 +145,33 @@ class RecordingController {
         });
       }
 
+      // Validate video metadata fields
+      const { secureUrl, publicId, videoFileSize } = req.body;
+      const videoMetadata = { secureUrl, publicId, videoFileSize: Number(videoFileSize) };
+
+      const { error: videoError } = UploadRecordingRequest.validate({
+        recordingId,
+        postureFeatures,
+        ...videoMetadata
+      });
+
+      if (videoError) {
+        console.log(`❌ [Controller] Video metadata validation failed:`, videoError.details[0].message);
+        return res.status(400).json({
+          success: false,
+          error: `Validation error: ${videoError.details[0].message}`
+        });
+      }
+
       console.log(`✅ [Controller] Validation passed, saving audio file...`);
 
-      // Save audio file and posture features
+      // Save audio file, posture features, and video metadata
       const result = await recordingService.saveAudioFile(
         recordingId,
         req.user.id,
         req.file,
-        postureFeatures
+        postureFeatures,
+        videoMetadata
       );
 
       if (!result.success) {
@@ -207,12 +226,19 @@ class RecordingController {
         response.analysis = result.recording.analysisResult;
         response.processedAt = result.recording.processedAt;
 
-        // Ensure info fields are present in the analysis
+        // Ensure info fields are present in the analysis with video metadata
         if (response.analysis && !response.analysis.info) {
           response.analysis.info = {
             category: result.recording.domain || 'general',
             reportCreated: result.recording.processedAt || new Date().toISOString()
           };
+        }
+
+        // Add video metadata to info
+        if (response.analysis.info) {
+          response.analysis.info.secureUrl = result.recording.secureUrl;
+          response.analysis.info.publicId = result.recording.publicId;
+          response.analysis.info.videoFileSize = result.recording.videoFileSize;
         }
       } else if (result.recording.status === 'failed') {
         console.log(`❌ [Controller] Recording processing failed: ${result.recording.errorMessage}`);
