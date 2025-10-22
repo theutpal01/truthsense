@@ -109,7 +109,10 @@ const StartRecordingRequest = Joi.object({
 
 const UploadRecordingRequest = Joi.object({
   recordingId: Joi.string().uuid().required(),
-  postureFeatures: PostureFeatures.required()
+  postureFeatures: PostureFeatures.required(),
+  secureUrl: Joi.string().uri().required(),
+  publicId: Joi.string().required(),
+  videoFileSize: Joi.number().integer().positive().required()
 });
 
 module.exports = {

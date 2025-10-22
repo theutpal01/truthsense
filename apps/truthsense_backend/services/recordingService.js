@@ -115,9 +115,9 @@ class RecordingService {
     }
   }
 
-  async saveAudioFile(recordingId, userId, audioFile, postureFeatures) {
+  async saveAudioFile(recordingId, userId, audioFile, postureFeatures, videoMetadata = {}) {
     const transaction = await sequelize.transaction();
-    
+
     try {
       const recording = await Recording.findOne({
         where: { id: recordingId, userId },
@@ -145,13 +145,16 @@ class RecordingService {
       await fs.writeFile(filePath, audioFile.buffer);
 
       try {
-        // Update recording with file info and posture features within transaction
+        // Update recording with file info, posture features, and video metadata within transaction
         await recording.update({
           audioFileName: fileName,
           audioFilePath: filePath,
           audioFileSize: audioFile.size,
           mimeType: audioFile.mimetype,
           postureFeatures,
+          secureUrl: videoMetadata.secureUrl,
+          publicId: videoMetadata.publicId,
+          videoFileSize: videoMetadata.videoFileSize,
           status: 'processing',
           processingStartedAt: new Date()
         }, { transaction });
@@ -188,7 +191,7 @@ class RecordingService {
     try {
       const recording = await Recording.findOne({
         where: { id: recordingId, userId },
-        attributes: ['id', 'domain', 'status', 'duration', 'startTime', 'endTime', 'analysisResult', 'processedAt', 'errorMessage']
+        attributes: ['id', 'domain', 'status', 'duration', 'startTime', 'endTime', 'analysisResult', 'processedAt', 'errorMessage', 'secureUrl', 'publicId', 'videoFileSize']
       });
 
       if (!recording) {
@@ -206,7 +209,7 @@ class RecordingService {
     try {
       const recordings = await Recording.findAndCountAll({
         where: { userId },
-        attributes: ['id', 'domain', 'status', 'duration', 'startTime', 'endTime', 'createdAt'],
+        attributes: ['id', 'domain', 'status', 'duration', 'startTime', 'endTime', 'createdAt', 'publicId'],
         order: [['createdAt', 'DESC']],
         limit,
         offset

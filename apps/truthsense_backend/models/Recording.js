@@ -58,6 +58,21 @@ const Recording = sequelize.define('Recording', {
     allowNull: true,
     comment: 'JSON object containing posture analysis from frontend'
   },
+  secureUrl: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'Cloudinary secure URL for the video'
+  },
+  publicId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'Cloudinary public ID for the video'
+  },
+  videoFileSize: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: 'Video file size in bytes'
+  },
   analysisResult: {
     type: DataTypes.JSON,
     allowNull: true,
