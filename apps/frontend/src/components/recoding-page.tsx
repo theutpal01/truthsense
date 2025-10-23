@@ -18,7 +18,7 @@ import { toast } from 'react-toastify';
 import { uploadVideoToCloudinary } from '@/utils/cloudinary.utils';
 import { useAuth } from '@/contexts/AuthContext';
 
-const MAX_DURATION = 10 * 60;
+const MAX_DURATION = 6 * 60;
 
 const RecordingPage = () => {
 	const router = useRouter();
@@ -94,6 +94,7 @@ const RecordingPage = () => {
 			// Start media recorder
 			const mediaRecorder = new MediaRecorder(stream, {
 				mimeType: 'video/webm',
+				videoBitsPerSecond: 1500000,
 			});
 			mediaRecorderRef.current = mediaRecorder;
 
@@ -327,8 +328,8 @@ const RecordingPage = () => {
 						ref={webcamRef}
 						audio
 						videoConstraints={{
-							width: 1280,
-							height: 720,
+							width: 480,
+							height: 360,
 							facingMode: "user"
 						}}
 						className="scale-x-[-1] rounded-xl w-full h-full object-cover"

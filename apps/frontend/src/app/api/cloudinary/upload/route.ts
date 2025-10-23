@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { v2 as cloudinary } from 'cloudinary';
+import fetch from 'node-fetch';
 
-// Configure Cloudinary (server-side only)
-cloudinary.config({
-	cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!,
-	api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY!,
-	api_secret: process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET!
-});
+export const maxDuration = 600; // 10 minutes for Vercel Pro (or use 60 for free tier)
 
 export async function POST(request: NextRequest) {
 	try {
@@ -32,35 +27,45 @@ export async function POST(request: NextRequest) {
 		const bytes = await file.arrayBuffer();
 		const buffer = Buffer.from(bytes);
 
-		// Upload to Cloudinary using upload_stream
-		const uploadResult = await new Promise<any>((resolve, reject) => {
-			const uploadStream = cloudinary.uploader.upload_stream(
-				{
-					resource_type: 'video',
-					folder: folder,
-					public_id: `recording_${recordingId}_${Date.now()}`,
-					format: 'webm',
-					tags: [userId, 'recording', recordingId, 'video'],
-					context: {
-						userId: userId,
-						userEmail: userEmail,
-						recordingId: recordingId,
-						uploadDate: new Date().toISOString()
-					}
-				},
-				(error: any, result: any) => {
-					if (error) {
-						console.error('❌ Cloudinary upload error:', error);
-						reject(error);
-					} else {
-						console.log('✅ Cloudinary upload success:', result?.secure_url);
-						resolve(result);
-					}
-				}
-			);
+		// Create FormData for Cloudinary API
+		const cloudinaryForm = new FormData();
+		cloudinaryForm.append('file', new Blob([buffer], { type: 'video/webm' }), 'recording.webm');
+		cloudinaryForm.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!);
+		cloudinaryForm.append('folder', folder);
+		cloudinaryForm.append('public_id', `recording_${recordingId}_${Date.now()}`);
+		cloudinaryForm.append('resource_type', 'video');
+		cloudinaryForm.append('tags', `${userId},recording,${recordingId},video`);
+		cloudinaryForm.append('context', `userId=${userId}|userEmail=${userEmail}|recordingId=${recordingId}`);
 
-			uploadStream.end(buffer);
+		const uploadUrl = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/auto/upload`;
+
+		console.log('⏱️ Sending to Cloudinary...');
+
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => controller.abort(), 300000);
+
+		const uploadResponse = await fetch(uploadUrl, {
+			method: 'POST',
+			body: cloudinaryForm as any,
+			signal: controller.signal,
 		});
+
+		clearTimeout(timeoutId);
+
+		if (!uploadResponse.ok) {
+			const errorText = await uploadResponse.text();
+			console.error('❌ Cloudinary HTTP error:', uploadResponse.status, errorText);
+			throw new Error(`Cloudinary failed with status ${uploadResponse.status}`);
+		}
+
+		const uploadResult = (await uploadResponse.json()) as any;
+
+		if (uploadResult.error) {
+			console.error('❌ Cloudinary API error:', uploadResult.error);
+			throw new Error(uploadResult.error.message || 'Upload failed');
+		}
+
+		console.log('✅ Upload success:', uploadResult.secure_url);
 
 		return NextResponse.json({
 			success: true,
@@ -77,7 +82,7 @@ export async function POST(request: NextRequest) {
 		});
 
 	} catch (error: any) {
-		console.error('❌ Upload error:', error);
+		console.error('❌ Upload error:', error.message);
 		return NextResponse.json(
 			{ success: false, error: error.message || 'Upload failed' },
 			{ status: 500 }
