@@ -94,7 +94,7 @@ const RecordingPage = () => {
 			// Start media recorder
 			const mediaRecorder = new MediaRecorder(stream, {
 				mimeType: 'video/webm',
-				videoBitsPerSecond: 1500000,
+				videoBitsPerSecond: 500000,
 			});
 			mediaRecorderRef.current = mediaRecorder;
 

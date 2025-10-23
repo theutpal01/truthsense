@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fetch from 'node-fetch';
 
-export const maxDuration = 600; // 10 minutes for Vercel Pro (or use 60 for free tier)
+export const maxDuration = 60; // 10 minutes for Vercel Pro (or use 60 for free tier)
 
 export async function POST(request: NextRequest) {
 	try {
