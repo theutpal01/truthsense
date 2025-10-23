@@ -17,9 +17,8 @@ import type { Recording, RecordingDomain } from '@/types/recording.types';
 import { toast } from 'react-toastify';
 import { uploadVideoToCloudinary } from '@/utils/cloudinary.utils';
 import { useAuth } from '@/contexts/AuthContext';
-import { a } from 'framer-motion/client';
 
-const MAX_DURATION = 15 * 60;
+const MAX_DURATION = 10 * 60;
 
 const RecordingPage = () => {
 	const router = useRouter();
@@ -109,11 +108,6 @@ const RecordingPage = () => {
 			// Start timer
 			const timer = setInterval(() => {
 				setElapsedTime(prev => {
-					if (prev + 1 >= MAX_DURATION) {
-						stopRecording();
-						clearInterval(timer);
-						return 0;
-					}
 					return prev + 1;
 				});
 			}, 1000);
@@ -134,6 +128,13 @@ const RecordingPage = () => {
 			setIntervalId(null);
 		}
 	};
+
+	useEffect(() => {
+		if (elapsedTime >= MAX_DURATION) {
+			stopRecording();
+		}
+	}, [elapsedTime]);
+
 
 	const stopRecording = async () => {
 		stopTimer();

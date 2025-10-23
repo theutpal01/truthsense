@@ -209,26 +209,25 @@ const Report = ({ id }: ReportProps) => {
 	const handleDownloadVideo = async () => {
 		try {
 
-			if (!recording?.audioFilePath) {
+			if (!data?.info?.secureUrl) {
 				toast.error("No video file available for download");
 				return;
 			}
 
 			await toast.promise(
 				(async () => {
-					// Fetch the video from Cloudinary
-					const response = await fetch(recording.audioFilePath);
+					const response = await fetch(data.info.secureUrl);
 					const blob = await response.blob();
+					const blobUrl = URL.createObjectURL(blob);
 
-					// Create download link
-					const url = URL.createObjectURL(blob);
 					const a = document.createElement('a');
-					a.href = url;
-					a.download = `recording-${recording.domain}-${new Date().toISOString().split('T')[0]}.webm`;
+					a.href = blobUrl;
+					a.download = `recording-${recording?.domain}-${new Date().toISOString().split('T')[0]}.webm`;
 					document.body.appendChild(a);
 					a.click();
 					document.body.removeChild(a);
-					URL.revokeObjectURL(url);
+
+					URL.revokeObjectURL(blobUrl);
 				}),
 				{
 					pending: 'Downloading video...',
@@ -391,7 +390,7 @@ const Report = ({ id }: ReportProps) => {
 				</div>
 
 				{/* Language Coach */}
-				<Card className={`flex-1 w-fit min-w-[300px] bg-card p-5 scrollable ${isDownloadingPDF ? "" : "max-h-96 overflow-auto"
+				<Card className={`flex-1 w-full min-w-[300px] bg-card p-5 scrollable ${isDownloadingPDF ? "" : "max-h-96 overflow-auto"
 					}`}>
 					<CardHeader className="font-medium text-lg">Language Coach</CardHeader>
 					<CardBody className="grid grid-cols-1 md:grid-cols-2 gap-5 scrollable">
@@ -437,7 +436,7 @@ const Report = ({ id }: ReportProps) => {
 				</Card>
 
 				{/* Speech Evaluator */}
-				<Card className={`flex-1 w-fit min-w-[300px] bg-card p-5 scrollable ${isDownloadingPDF ? "" : "max-h-96 overflow-auto"
+				<Card className={`flex-1 w-full min-w-[300px] bg-card p-5 scrollable ${isDownloadingPDF ? "" : "max-h-96 overflow-auto"
 					}`}>
 					<CardHeader className="font-medium text-lg">Speech Evaluator</CardHeader>
 					<CardBody className="grid grid-cols-1 md:grid-cols-2 gap-5 scrollable">
@@ -500,8 +499,8 @@ const Report = ({ id }: ReportProps) => {
 							<div>
 								<p className="text-foreground/70">File Size</p>
 								<p className="font-semibold">
-									{recording.audioFileSize
-										? `${(recording.audioFileSize / 1024 / 1024).toFixed(2)} MB`
+									{data.info.videoFileSize
+										? `${(data.info.videoFileSize / 1024 / 1024).toFixed(2)} MB`
 										: 'N/A'
 									}
 								</p>

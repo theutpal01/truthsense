@@ -14,7 +14,7 @@ export function sanitizeFolderName(name: string): string {
 
 /**
  * Upload video to Cloudinary via backend proxy
- * This is more secure as API secrets stay on the server
+ * Compresses video on server before upload for faster transfers
  */
 export async function uploadVideoToCloudinary(
 	videoFile: File,
@@ -22,16 +22,42 @@ export async function uploadVideoToCloudinary(
 	recordingId: string,
 	onProgress?: (progress: number) => void
 ): Promise<CloudinaryUploadResponse> {
-	console.log('📤 Uploading video via backend proxy...');
-	console.log('📹 Video size:', (videoFile.size / 1024 / 1024).toFixed(2), 'MB');
+	console.log('📤 Starting video upload process...');
+	console.log('📹 Original size:', (videoFile.size / 1024 / 1024).toFixed(2), 'MB');
 
-	// Create user-specific folder
+	let fileToUpload = videoFile;
+
+	try {
+		// Step 1: Compress video on server
+		console.log('🔧 Compressing video...');
+		const compressFormData = new FormData();
+		compressFormData.append('file', videoFile);
+
+		const compressRes = await fetch('/api/compress', {
+			method: 'POST',
+			body: compressFormData,
+		});
+
+		const compressData = await compressRes.json();
+
+		if (compressData.success && compressData.data.compressed) {
+			const compressedBlob = new Blob([Buffer.from(compressData.data.file.data)], { type: 'video/webm' });
+			fileToUpload = new File([compressedBlob], 'recording-compressed.webm', { type: 'video/webm' });
+			console.log(`✅ Compression complete: ${(fileToUpload.size / 1024 / 1024).toFixed(2)} MB (${compressData.data.reduction})`);
+		} else {
+			console.warn('⚠️ Compression skipped, uploading original file');
+		}
+	} catch (compressionError) {
+		console.warn('⚠️ Compression failed, uploading original file:', compressionError);
+		// Continue with original file
+	}
+
+	// Step 2: Upload compressed file to Cloudinary
 	const userFolder = sanitizeFolderName(user.name || user.email || user.id);
 	const folderPath = `recordings/${userFolder}`;
 
-	// Create FormData for upload
 	const formData = new FormData();
-	formData.append('file', videoFile);
+	formData.append('file', fileToUpload);
 	formData.append('folder', folderPath);
 	formData.append('recordingId', recordingId);
 	formData.append('userId', user.id);
@@ -42,7 +68,6 @@ export async function uploadVideoToCloudinary(
 	return new Promise((resolve, reject) => {
 		const xhr = new XMLHttpRequest();
 
-		// Track upload progress
 		if (onProgress) {
 			xhr.upload.addEventListener('progress', (e) => {
 				if (e.lengthComputable) {
@@ -81,7 +106,6 @@ export async function uploadVideoToCloudinary(
 			reject(new Error('Upload aborted'));
 		});
 
-		// Upload via backend proxy
 		xhr.open('POST', '/api/cloudinary/upload');
 		xhr.send(formData);
 	});
