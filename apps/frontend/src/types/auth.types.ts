@@ -55,6 +55,7 @@ export interface SignupCredentials {
 export interface OTPVerificationResponse {
 	success: boolean;
 	token?: string;
+	refreshToken?: string;
 	user?: User;
 	message?: string;
 }

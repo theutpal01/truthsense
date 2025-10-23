@@ -59,7 +59,7 @@ const Login = () => {
 			await login({ email, password });
 			toast.success('Logged in successful!');
 			router.push('/');
-		} catch (err) {
+		} catch (err: ApiError | any) {
 			console.error('Login error:', err);
 			if (err?.isVerified === false) {
 				toast.info('Please verify your email first. ');

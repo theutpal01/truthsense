@@ -80,7 +80,7 @@ class ApiService {
 			try {
 				const accessToken = await this.getValidAccessToken()
 				headers['Authorization'] = `Bearer ${accessToken}`
-			} catch (error) {
+			} catch {
 				throw new Error('Authentication required')
 			}
 		}
@@ -120,8 +120,8 @@ class ApiService {
 			}
 
 			return await response.json()
-		} catch (error) {
-			throw error
+		} catch {
+			throw new Error('Failed to parse response')
 		}
 	}
 
@@ -194,7 +194,7 @@ class ApiService {
 			try {
 				const accessToken = await this.getValidAccessToken()
 				headers.Authorization = `Bearer ${accessToken}`
-			} catch (error) {
+			} catch{
 				throw new Error('Authentication required')
 			}
 		}

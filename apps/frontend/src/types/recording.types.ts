@@ -1,4 +1,5 @@
 import { User } from "./auth.types"
+import { FeedbackCounts } from "./feedback.types";
 
 export interface RecordingDomain {
 	id: string;
@@ -82,7 +83,7 @@ export interface CreateRecordingPayload {
 
 export interface UploadAudioPayload {
 	audioFile: File;
-	postureFeatures?: PostureFeatures;
+	postureFeatures?: FeedbackCounts;
 	secureUrl?: string;
 	publicId?: string;
 	videoFileSize?: number;

@@ -50,7 +50,7 @@ const ForgetPassword = () => {
 			const res = await requestPasswordReset(email);
 			toast.success('Password reset code sent to your email.');
 			setStep('otp');
-		} catch (err) {
+		} catch (err: ApiError | any) {
 			toast.error(error || err?.error || 'Failed to send password reset code. Please try again.');
 		}
 	};
@@ -91,7 +91,7 @@ const ForgetPassword = () => {
 			await changePassword({ email, code, newPassword: password });
 			toast.success('Password changed successfully! You can now log in with your new password.');
 			router.push('/auth/login');
-		} catch (err) {
+		} catch (err: ApiError | any) {
 			toast.error(error || err?.error || 'Failed to change password. Please try again.');
 		}
 	};
