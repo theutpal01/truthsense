@@ -78,11 +78,6 @@ const Register = () => {
 			if (error) {
 				throw new Error(error);
 			}
-			await sendOTP(formData.email);
-
-			if (error) {
-				throw new Error(error);
-			}
 			toast.info('Verification code sent! Please check your email.');
 			setStep('verify');
 
