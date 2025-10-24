@@ -16,7 +16,7 @@ const Login = () => {
 	const [code, setCode] = useState('');
 	const [step, setStep] = useState<'email' | 'otp'>('email');
 
-	const { user, login, verifyOTP, isLoading, error } = useAuth();
+	const { login, verifyOTP, isLoading, error } = useAuth();
 	const router = useRouter();
 
 	useEffect(() => {

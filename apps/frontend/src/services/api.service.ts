@@ -120,8 +120,8 @@ class ApiService {
 			}
 
 			return await response.json()
-		} catch {
-			throw new Error('Failed to parse response')
+		} catch (err) {
+			throw err
 		}
 	}
 
