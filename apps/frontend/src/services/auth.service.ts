@@ -59,11 +59,6 @@ class AuthService {
 		return response;
 	}
 
-	// Send OTP to email
-	async sendOTP(email: string): Promise<void> {
-		await apiService.post('/auth/send-otp/', { email }, false)
-	}
-
 	// Verify OTP code
 	async verifyOTP(email: string, code: string): Promise<OTPVerificationResponse> {
 		const response = await apiService.post<OTPVerificationResponse>(
