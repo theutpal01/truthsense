@@ -90,7 +90,7 @@ const FeatureCards = () => {
 						>
 							<TiMicrophone className='size-48' />
 						</Button>
-						<p className='text-primary text-lg font-medium'>Click to Try the Demo!</p>
+						<p className='text-primary text-lg font-medium'>Click the mic to start recording!</p>
 					</div>
 				</div>
 

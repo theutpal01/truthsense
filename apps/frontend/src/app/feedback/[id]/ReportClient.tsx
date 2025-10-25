@@ -152,6 +152,7 @@ const Report = ({ id }: ReportProps) => {
 			noPrintEls.forEach((el) => (el as HTMLElement).style.display = '');
 
 			// PDF: Full-image, scaled to fit paper (no multipage logic needed)
+
 			const pdf = new jsPDF({
 				orientation: 'portrait',
 				unit: 'mm',
@@ -160,19 +161,24 @@ const Report = ({ id }: ReportProps) => {
 
 			const pdfWidth = pdf.internal.pageSize.getWidth();
 			const pdfHeight = pdf.internal.pageSize.getHeight();
+			const imgWidth = canvas.width;
+			const imgHeight = canvas.height;
+
+			const heightRatio = pdfHeight / imgHeight;
+			const scaledWidth = imgWidth * heightRatio;
 
 			pdf.addImage(
 				canvasDataUrl,
 				'PNG',
+				scaledWidth < pdfWidth ? (pdfWidth - scaledWidth) / 2 : 0,
 				0,
-				0,
-				pdfWidth,
+				scaledWidth,
 				pdfHeight
 			);
 
 			// Save PDF
 			const date = new Date().toISOString().split('T')[0];
-			const filename = `Report_${recording?.domain || 'Recording'}_${date}.pdf`;
+			const filename = `Report_${recording?.id || 'Recording'}_${date}.pdf`;
 			pdf.save(filename);
 
 		} catch (err) {
