@@ -2,12 +2,20 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { isMobile } from "react-device-detect";
 import Sidebar from "@/components/sidebar";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 
 export default function ClientLayoutWrapper({ children }: { children: ReactNode }) {
 	const pathname = usePathname();
+	const [isMobile, setIsMobile] = useState(false);
+
+	useEffect(() => {
+		// Only check for mobile on client side
+		const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+		const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+		setIsMobile(mobileRegex.test(userAgent));
+	}, []);
+
 	if (isMobile) {
 		return (
 			<div className="flex flex-col justify-center items-center h-screen">
